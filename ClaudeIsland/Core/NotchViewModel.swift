@@ -101,6 +101,7 @@ class NotchViewModel: ObservableObject {
     // MARK: - Private
 
     private var cancellables = Set<AnyCancellable>()
+    private var workspaceObserver: NSObjectProtocol?
     private let events = EventMonitors.shared
 
     /// Pending hover-open/hover-close work. Small grace periods filter out
@@ -122,6 +123,34 @@ class NotchViewModel: ObservableObject {
         self.hasPhysicalNotch = hasPhysicalNotch
         setupEventHandlers()
         observeSelectors()
+        observeAppSwitching()
+    }
+
+    deinit {
+        if let observer = workspaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+    }
+
+    /// Close the panel whenever another application becomes frontmost.
+    /// Handles the "click anywhere on screen" dismiss case reliably —
+    /// our own panel is a nonactivating NSPanel so clicks inside it don't
+    /// activate us, which means activation events only fire when the user
+    /// clicks into a genuinely different app. Also covers clicks on the
+    /// bottom 3/4 of the screen that fall outside our window's bounds and
+    /// therefore never reach the local mouse monitor.
+    private func observeAppSwitching() {
+        let myBundleID = Bundle.main.bundleIdentifier
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.bundleIdentifier != myBundleID else { return }
+            guard let self, self.status == .opened else { return }
+            self.notchClose()
+        }
     }
 
     private func observeSelectors() {
