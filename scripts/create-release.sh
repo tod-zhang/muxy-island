@@ -134,7 +134,7 @@ fi
 # Prepend new <item> to appcast.xml
 # ------------------------------------------------------------------------
 echo "=== Updating appcast.xml ==="
-PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S +0000")
+PUB_DATE=$(LC_ALL=C date -u +"%a, %d %b %Y %H:%M:%S +0000")
 NOTES_HTML=$(printf '%s' "$NOTES" | sed -E 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
 ENCL_URL="https://github.com/$REPO/releases/download/v$VERSION/$DMG_NAME"
 
