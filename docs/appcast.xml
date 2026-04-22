@@ -4,7 +4,35 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-            <item>
+                <item>
+      <title>Version 0.4.0</title>
+      <pubDate>Wed, 22 Apr 2026 06:10:41 +0000</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[## 新增
+
+- **4 按钮审批** —— 审批条从 3 个按钮变成 4 个，语义更清晰：
+  - `Deny`（拒绝这次，深灰）
+  - `Allow Once`（仅这次允许，白）
+  - `Allow All`（这个项目永久允许此工具，橙色，原 Bypass 语义）
+  - `Bypass`（这个 session 跳过**所有**后续审批，暗红）
+- **通知面板 5 秒自动关** —— 以前弹出来要手动点关，现在默认 5 秒自动收。鼠标 hover 过去就取消倒计时（让你读长的审批说明不会被打断）
+- **设置里可配置** —— 菜单新增 `Auto-close` 行，可选 Off / 3s / 5s / 10s / 30s
+
+## 修复
+
+- **点外部有时要点两三下才关** —— 现在监听系统级的"前台应用切换"事件，点任何别的 app 立即关，不管点的位置在屏幕哪里
+
+## 升级
+
+0.3.0 用户点菜单"Check for Updates" → Sparkle 自动下载并替换。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.4.0/MuxyIsland-0.4.0.dmg"
+                 sparkle:edSignature="1y+t4UicZ24PwWe20Qi8fSo1guzvDitsMNxHYZlNpHV96VVsNhODqYNAsABWYGe8Zzt1VytPaBro8hkfy66jCA=="
+                 length="6508779"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.3.0</title>
       <pubDate>Wed, 22 Apr 2026 04:47:46 +0000</pubDate>
       <sparkle:version>6</sparkle:version>
