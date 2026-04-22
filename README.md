@@ -2,61 +2,181 @@
   <img src="ClaudeIsland/Assets.xcassets/AppIcon.appiconset/icon_128x128.png" alt="Logo" width="100" height="100">
   <h3 align="center">Muxy Island</h3>
   <p align="center">
-    A macOS menu bar app that brings Dynamic Island-style notifications to <a href="https://github.com/muxy-app/muxy">Muxy</a> terminal sessions running Claude Code.
+    A macOS menu-bar companion that surfaces <a href="https://github.com/muxy-app/muxy">Muxy</a>-hosted
+    Claude Code (and Codex, OpenCode) sessions in a Dynamic-Island-style notch panel —
+    with one-click pane jumps, in-panel chat, and tool approval workflows.
   </p>
 </div>
 
-## 简介
+<p align="center">
+  <a href="https://github.com/tod-zhang/muxy-island/releases/latest">
+    <img src="https://img.shields.io/github/v/release/tod-zhang/muxy-island?style=flat&color=white&labelColor=000000&label=release" alt="Release" />
+  </a>
+  <img src="https://img.shields.io/github/license/tod-zhang/muxy-island?style=flat&color=white&labelColor=000000" alt="License" />
+</p>
 
-**专门用于 Muxy**。这是 [Vibe Notch (farouqaldori/vibe-notch)](https://github.com/farouqaldori/vibe-notch) 的 fork，在其基础上深度集成了 Muxy 的远程 WebSocket API，让 Vibe Notch 的刘海面板可以直接驱动 Muxy：
+## What it is
 
-- **跳转到 session** — 点击面板里的 session 行，会直接跳转到 Muxy 里对应的 tab/pane（通过 `selectProject` + `focusArea` + `selectTab`）
-- **在面板里发消息** — 聊天气泡打开的对话框能直接向 Muxy 对应的 Claude 实例发送 prompt（通过 `takeOverPane` + `terminalInput`）
-- **hook 捕获 Muxy 上下文** — Python hook 读取 Muxy 注入的 `MUXY_PANE_ID` / `MUXY_PROJECT_ID` / `MUXY_WORKTREE_ID` 环境变量，无需进程树推断
+Muxy Island is a fork of [farouqaldori/vibe-notch](https://github.com/farouqaldori/vibe-notch)
+(Apache 2.0) with deep integration into the [Muxy](https://github.com/muxy-app/muxy)
+terminal. Vibe Notch shows your Claude Code sessions as a notch-style overlay; this
+fork extends it so the overlay can *drive* Muxy directly — click a session to jump to
+its pane, type into the chat to send prompts to the Claude running there, and approve
+tool permissions without switching windows.
 
-Muxy 本身也有 Claude Code hook，但只做"发通知到 Muxy 内部 toast"。本 fork 是反向：把事件拉到刘海 UI 上做统一入口，包括审批、聊天、跳转。
+Also supports **Codex CLI** (OpenAI) and **OpenCode** (sst) alongside Claude Code.
 
-## 特性
+## Install
 
-- **刘海 UI** — 动态岛风格的悬浮面板，鼠标悬停即展开
-- **多 session 监控** — 实时追踪所有 Claude Code session（Muxy / tmux / 其他终端）
-- **权限审批** — 直接在面板里批准或拒绝工具调用，可配置独立的提示音
-- **聊天历史** — 在面板里查看完整对话（markdown 渲染），并向 Muxy pane 发送新消息
-- **自动安装 hook** — 首次运行自动在 `~/.claude/settings.json` 注册事件 hook
+Download the latest DMG from the [Releases page](https://github.com/tod-zhang/muxy-island/releases/latest)
+and drag `Vibe Notch.app` to `/Applications`.
 
-## 系统要求
+**First launch**: the app is ad-hoc signed (no paid Apple Developer cert), so
+macOS Gatekeeper will warn about an unidentified developer. Right-click the app
+→ **Open** → confirm. Subsequent launches work normally.
+
+Auto-updates are wired to a Sparkle appcast at
+`docs/appcast.xml` on this repo. Click **Check for Updates** in the menu to
+download + install the next release in place.
+
+## Setup
+
+### 1. Enable Muxy remote access (required for Muxy integration)
+
+Open **Muxy → Settings → Mobile** and toggle on **Allow mobile device connection**.
+This starts a local WebSocket server on port 4865 that Muxy Island talks to.
+
+Without this, session-jumping and in-panel chat send won't work for Muxy panes —
+the app will still show Claude sessions and handle tool approvals, it just can't
+reach into Muxy.
+
+### 2. Pair Muxy Island with Muxy (one time)
+
+The **first time** you click a session row to jump into its Muxy pane, Muxy
+will pop up a pairing request asking you to approve a new device named
+"Vibe Notch". Click **Approve**. The pairing is cached — you won't be asked again.
+
+### 3. Hooks install themselves
+
+On launch, Muxy Island installs a hook script into `~/.claude/hooks/` and
+registers it in the relevant config files for each installed tool:
+
+| Tool | Config touched |
+| --- | --- |
+| Claude Code | `~/.claude/settings.json` — adds a `command` hook for all events |
+| Codex CLI | `~/.codex/hooks.json` — same hook script, different provider tag |
+| OpenCode | `~/.opencode/plugins/muxy-island-notify.js` — dropped in the plugins dir |
+
+All registrations are marker-based and coexist with other hooks you may
+already have installed (e.g., other Claude desktop tools).
+
+You can disable everything from the menu's **Hooks** toggle.
+
+## Using the app
+
+### Panel behavior
+
+- **Hover** the notch → panel expands instantly (0 ms delay)
+- **Move mouse off the panel** → collapses instantly (if opened by hover)
+- **Notification** (task done, approval needed) → panel pops open automatically
+  and auto-collapses after 5s (configurable in Settings → Auto-close)
+- **Click anywhere else on screen** → panel closes
+
+### Session row
+
+Each Claude / Codex / OpenCode session appears as a row with:
+
+- State indicator (processing spinner, ready checkmark, or approval prompt)
+- Session title + last activity or pending tool call
+- **Single-click** the row → jumps to the Muxy pane (or uses yabai for tmux sessions)
+- **Chat bubble icon** → opens an in-panel chat view where you can read history
+  and send new prompts (Muxy or tmux sessions only)
+- **Archive icon** → removes the session from the list (only when idle/ready)
+
+### Tool approvals
+
+When Claude / Codex requests permission for a tool, the approval bar gives
+four options:
+
+| Button | What happens |
+| --- | --- |
+| **Deny** | Reject this single request |
+| **Allow Once** | Approve just this request |
+| **Allow All** | Approve + remember this tool for this project's cwd; future sessions in the same project auto-allow it (persisted) |
+| **Bypass** | Approve + turn on a session-wide "no more approvals" flag for this session only (not persisted) |
+
+"Allow All" persistence is stored in UserDefaults keyed by cwd. There's
+currently no UI to review or revoke individual rules — delete
+`com.celestial.ClaudeIsland` from `~/Library/Preferences` to wipe them.
+
+### Sending messages from the chat panel
+
+Click the chat bubble on any Muxy or tmux session. The input field sends
+typed text to the actual terminal:
+
+- **Muxy** sessions → via the `terminalInput` WebSocket API (briefly takes
+  pane ownership, sends, releases — invisible to you)
+- **tmux** sessions → via `tmux paste-buffer` (needs yabai to focus back)
+
+OpenCode sessions have the chat bubble hidden because OpenCode's plugin API
+doesn't expose a way to inject input back.
+
+## Settings
+
+Open the menu (hamburger icon, top-right of opened panel):
+
+- **Screen** — which display the notch lives on
+- **Ready Sound** — plays when Claude finishes a turn
+- **Approval Sound** — plays when a tool approval is requested
+- **Auto-close** — Off / 3 / 5 / 10 / 30 seconds for notification panels
+- **Claude Directory** — override for non-default `.claude` dirs
+  (e.g., enterprise distros that use `.claude-internal`)
+- **Launch at Login** / **Hooks** toggles
+
+Sounds are only played when the session's terminal isn't currently visible on
+your space — no noise spam while you're already looking at Claude.
+
+## System requirements
 
 - macOS 15.6+
-- Claude Code CLI
-- （可选）Muxy — [muxy-app/muxy](https://github.com/muxy-app/muxy)，需在 Settings → Mobile 里开启 "Allow mobile device connection"
-- （可选）tmux + yabai — 对非 Muxy 的 tmux session 使用 yabai 做窗口聚焦
+- At least one of: [Claude Code CLI](https://github.com/anthropics/claude-code),
+  [Codex CLI](https://github.com/openai/codex), or
+  [OpenCode](https://github.com/sst/opencode)
+- For the Muxy integration: [Muxy](https://github.com/muxy-app/muxy) installed
+  and running with mobile-device access enabled
+- For tmux session support: [tmux](https://github.com/tmux/tmux) and
+  [yabai](https://github.com/koekeishiya/yabai) (only needed if you want
+  non-Muxy tmux sessions focusable from the panel)
 
-## 使用 Muxy 集成
-
-1. 打开 Muxy，进入 `Settings → Mobile`，开启 `Allow mobile device connection`
-2. 在 Muxy 的 tab 里运行 `claude`
-3. 运行本应用，session 会自动出现在刘海面板
-4. **首次点击"跳转"**：Muxy 会弹出配对请求，点 approve
-5. 之后每次点行都会直接跳到对应 pane
-
-## 构建
+## Build from source
 
 ```bash
-xcodebuild -scheme ClaudeIsland -configuration Release build
+git clone https://github.com/tod-zhang/muxy-island.git
+cd muxy-island
+xcodebuild -scheme ClaudeIsland -configuration Release \
+  CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" \
+  ENABLE_HARDENED_RUNTIME=NO build
 ```
 
-项目用 Xcode 16 的 `PBXFileSystemSynchronizedRootGroup`，添加新 Swift 文件到 `ClaudeIsland/` 目录下会自动纳入构建。
+Build output lands in `build/Build/Products/Release/Vibe Notch.app`.
 
-## 致谢与许可
+To cut a Release (bumps the build number, packages a signed DMG, updates the
+Sparkle appcast, and creates the GitHub release):
 
-基于 [farouqaldori/vibe-notch](https://github.com/farouqaldori/vibe-notch)（Apache 2.0）fork。原作者实现了整个刘海 UI + Claude Code hook 系统，本 fork 在此之上新增 Muxy 集成。
+```bash
+./scripts/create-release.sh 0.5.0 "Your release notes"
+```
 
-本项目同样使用 Apache 2.0 许可证（见 `LICENSE.md`）。
+Requires `gh` CLI authenticated to your repo and a Sparkle EdDSA key pair
+at `.sparkle-keys/eddsa_private_key` (generate with `scripts/generate-keys.sh`).
 
-## Fork 特有的改动
+## Credits
 
-- `ClaudeIsland/Services/Muxy/` — MuxyClient（WebSocket + 配对）、MuxyController（高层聚焦/输入 API）、MuxyProtocol（wire types）
-- `ClaudeIsland/Resources/claude-island-state.py` — hook 捕获 `MUXY_*` 环境变量
-- `ClaudeIsland/Core/NotchViewModel.swift` — hover-to-expand 改成 0 延迟即时响应
-- 设置菜单 — 新增独立的 "Approval Sound" 设置（审批提示音可单独配置）
-- 分析/更新 — 移除原作者的 Mixpanel token 和 Sparkle feed URL，默认禁用
+- Built on top of [farouqaldori/vibe-notch](https://github.com/farouqaldori/vibe-notch)
+  (Apache 2.0)
+- [Muxy](https://github.com/muxy-app/muxy) — the terminal this integrates with
+- [Sparkle](https://github.com/sparkle-project/Sparkle) — auto-update framework
+
+## License
+
+Apache 2.0 — see [LICENSE.md](LICENSE.md).
