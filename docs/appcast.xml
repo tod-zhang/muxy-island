@@ -7,7 +7,7 @@
                 <item>
       <title>Version 0.4.0</title>
       <pubDate>Wed, 22 Apr 2026 06:10:41 +0000</pubDate>
-      <sparkle:version>6</sparkle:version>
+      <sparkle:version>7</sparkle:version>
       <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
       <description><![CDATA[## 新增
@@ -28,8 +28,8 @@
 
 0.3.0 用户点菜单"Check for Updates" → Sparkle 自动下载并替换。]]></description>
       <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.4.0/MuxyIsland-0.4.0.dmg"
-                 sparkle:edSignature="1y+t4UicZ24PwWe20Qi8fSo1guzvDitsMNxHYZlNpHV96VVsNhODqYNAsABWYGe8Zzt1VytPaBro8hkfy66jCA=="
-                 length="6508779"
+                 sparkle:edSignature="GTPiwZ9ov0V60fEiMZht5YRjLYr5mHEaMsLdhmiZiWynG2zQs5DhfbSa5+apdLhtM/jTpDd9zizJ+TipcEitDA=="
+                 length="6508789"
                  type="application/octet-stream" />
     </item>
 <item>

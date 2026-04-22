@@ -76,6 +76,14 @@ if [ "$CURRENT_VERSION" != "$VERSION" ]; then
     sed -i '' "s/MARKETING_VERSION = $CURRENT_VERSION;/MARKETING_VERSION = $VERSION;/g" "$PBXPROJ"
 fi
 
+# Sparkle compares CFBundleVersion (CURRENT_PROJECT_VERSION), not the
+# marketing version — if this doesn't increment, every client thinks
+# they're already up to date. Always bump by 1 for each release.
+CURRENT_BUILD=$(grep -m1 "CURRENT_PROJECT_VERSION" "$PBXPROJ" | sed -E 's/.*CURRENT_PROJECT_VERSION = ([^;]+);.*/\1/')
+NEW_BUILD=$((CURRENT_BUILD + 1))
+echo "Bumping CURRENT_PROJECT_VERSION: $CURRENT_BUILD -> $NEW_BUILD"
+sed -i '' "s/CURRENT_PROJECT_VERSION = $CURRENT_BUILD;/CURRENT_PROJECT_VERSION = $NEW_BUILD;/g" "$PBXPROJ"
+
 # ------------------------------------------------------------------------
 # Build Release (ad-hoc signed)
 # ------------------------------------------------------------------------
