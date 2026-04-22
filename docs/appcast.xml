@@ -4,7 +4,31 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-    <item>
+        <item>
+      <title>Version 0.2.0</title>
+      <pubDate>三, 22  4月 2026 04:20:22 +0000</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[## 新增
+
+- **Bypass 审批按钮** —— 审批条现在是 `[Deny] [Allow] [Bypass]` 三个按钮。点 Bypass 后，该工具在**同一项目**（以 cwd 为 key）里所有后续审批请求自动通过，规则持久化到 UserDefaults 跨重启有效
+- **每个 session 的 provider 数据层** —— 底层已经支持 Claude Code / Codex / OpenCode 多 provider（OpenCode 插件在 ~/.opencode/plugins/，Codex hook 在 ~/.codex/hooks.json）。UI 暂不区分视觉标识
+
+## 修复
+
+- **面板弹出不再抢键盘焦点** —— 之前 hover 展开刘海会把键盘焦点从别的 app 里拽过来，打断正在进行的语音输入 / TextField 编辑。现在面板完全"被动"展示，只在你主动点面板内 TextField 时才接管键盘
+- 审批条移除了多余的聊天气泡图标
+
+## 其他
+
+- 从 v0.1.0 升级：Sparkle 会自动下载 DMG → 替换 → 重启]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.2.0/MuxyIsland-0.2.0.dmg"
+                 sparkle:edSignature="cGED681PHjId5EGUXllQofRV/OAuy+lbfIHoHx/5kxXpCN70Z4Qy55uPgjW3EfR76npeqRakdhTShJbJQU7GDg=="
+                 length="6469672"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.1.0</title>
       <pubDate>Tue, 22 Apr 2026 11:00:00 +0800</pubDate>
       <sparkle:version>6</sparkle:version>
