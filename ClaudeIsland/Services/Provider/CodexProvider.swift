@@ -23,7 +23,6 @@ private let logger = Logger(subsystem: "com.claudeisland", category: "CodexProvi
 struct CodexProvider: SessionProvider {
     let id = ProviderID.codex
     let displayName = "Codex"
-    let iconName = "chevron.left.slash.chevron.right"
     let executableNames = ["codex"]
     /// Approval is supported because Codex implements PermissionRequest with
     /// Claude Code semantics. Message-send works via the same tmux/Muxy

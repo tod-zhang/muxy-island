@@ -46,8 +46,6 @@ protocol SessionProvider: Sendable {
     /// every hook payload so the app can route events back to the provider.
     var id: String { get }
     var displayName: String { get }
-    /// SF Symbol name, shown as a small badge on session rows.
-    var iconName: String { get }
 
     /// CLI executable name(s) we probe to decide whether to install hooks.
     var executableNames: [String] { get }

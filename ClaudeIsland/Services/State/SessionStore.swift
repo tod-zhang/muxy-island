@@ -66,6 +66,9 @@ actor SessionStore {
         case .permissionDenied(let sessionId, let toolUseId, let reason):
             await processPermissionDenied(sessionId: sessionId, toolUseId: toolUseId, reason: reason)
 
+        case .permissionBypassed(let sessionId, let toolUseId, let toolName):
+            await processPermissionBypassed(sessionId: sessionId, toolUseId: toolUseId, toolName: toolName)
+
         case .permissionSocketFailed(let sessionId, let toolUseId):
             await processSocketFailure(sessionId: sessionId, toolUseId: toolUseId)
 
@@ -154,6 +157,24 @@ actor SessionStore {
             return
         }
 
+        // Bypass shortcut: if the user has previously hit Bypass for this
+        // tool in this session, skip the whole approval dance — respond
+        // "allow" on the socket immediately and keep the session in its
+        // current phase (typically .processing) so the UI doesn't flash.
+        if event.event == "PermissionRequest",
+           let toolUseId = event.toolUseId,
+           let toolName = event.tool,
+           session.bypassedTools.contains(toolName) {
+            Self.logger.debug("Bypass hit for \(sessionId.prefix(8), privacy: .public) tool:\(toolName, privacy: .public) — auto-allow")
+            HookSocketServer.shared.respondToPermission(toolUseId: toolUseId, decision: "allow")
+            // Still record the tool in the tracker so PostToolUse can match.
+            session.toolTracker.startTool(id: toolUseId, name: toolName)
+            session.lastActivity = Date()
+            sessions[sessionId] = session
+            publishState()
+            return
+        }
+
         let newPhase = event.determinePhase()
 
         if session.phase.canTransition(to: newPhase) {
@@ -183,7 +204,14 @@ actor SessionStore {
     }
 
     private func createSession(from event: HookEvent) -> SessionState {
-        SessionState(
+        // Seed bypassedTools from the persistent per-project store so a new
+        // session inherits the trust level the user already granted in this
+        // project. Without this seeding, persistent bypass would still take
+        // effect (processHookEvent re-checks via BypassRules.allows), but
+        // having it on SessionState lets the in-memory check short-circuit
+        // without a cross-actor read on every PermissionRequest event.
+        let seededBypasses = BypassRules.shared.tools(forCwd: event.cwd)
+        return SessionState(
             sessionId: event.sessionId,
             cwd: event.cwd,
             projectName: URL(fileURLWithPath: event.cwd).lastPathComponent,
@@ -194,7 +222,8 @@ actor SessionStore {
             muxyPaneId: event.muxyPaneId,
             muxyProjectId: event.muxyProjectId,
             muxyWorktreeId: event.muxyWorktreeId,
-            phase: .idle
+            phase: .idle,
+            bypassedTools: seededBypasses
         )
     }
 
@@ -389,6 +418,22 @@ actor SessionStore {
     }
 
     // MARK: - Permission Processing
+
+    /// Bypass = Approve + remember the tool name so future approval
+    /// requests for the same tool in this project are auto-allowed.
+    /// Persistence is per-cwd, so a brand-new session starting in the
+    /// same project inherits the same bypasses without the user having
+    /// to re-grant. Scope is project-wide, not session-wide.
+    private func processPermissionBypassed(sessionId: String, toolUseId: String, toolName: String) async {
+        if var session = sessions[sessionId] {
+            session.bypassedTools.insert(toolName)
+            BypassRules.shared.record(cwd: session.cwd, tool: toolName)
+            sessions[sessionId] = session
+            Self.logger.debug("Bypass registered for cwd:\(session.cwd, privacy: .public) tool:\(toolName, privacy: .public)")
+        }
+        // Re-use the approval state transition — same "allow" semantics.
+        await processPermissionApproved(sessionId: sessionId, toolUseId: toolUseId)
+    }
 
     private func processPermissionApproved(sessionId: String, toolUseId: String) async {
         guard var session = sessions[sessionId] else { return }

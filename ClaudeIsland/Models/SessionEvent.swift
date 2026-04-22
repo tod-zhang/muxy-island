@@ -24,6 +24,11 @@ enum SessionEvent: Sendable {
     /// User denied a permission request
     case permissionDenied(sessionId: String, toolUseId: String, reason: String?)
 
+    /// User chose Bypass on a permission request — approve this tool
+    /// call AND remember the tool name so further requests for the same
+    /// tool in this session auto-approve without UI.
+    case permissionBypassed(sessionId: String, toolUseId: String, toolName: String)
+
     /// Permission socket failed (connection died before response)
     case permissionSocketFailed(sessionId: String, toolUseId: String)
 
@@ -189,6 +194,8 @@ extension SessionEvent: CustomStringConvertible {
             return "permissionApproved(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)))"
         case .permissionDenied(let sessionId, let toolUseId, _):
             return "permissionDenied(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)))"
+        case .permissionBypassed(let sessionId, let toolUseId, let toolName):
+            return "permissionBypassed(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)), name: \(toolName))"
         case .permissionSocketFailed(let sessionId, let toolUseId):
             return "permissionSocketFailed(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)))"
         case .fileUpdated(let payload):

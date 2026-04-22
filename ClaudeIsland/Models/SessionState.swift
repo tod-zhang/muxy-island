@@ -69,6 +69,12 @@ struct SessionState: Equatable, Identifiable, Sendable {
     /// This removes pre-/clear items that no longer exist in the JSONL
     var needsClearReconciliation: Bool
 
+    /// Tool names the user has chosen to Bypass in this session. Future
+    /// PermissionRequest events for any tool in this set are auto-allowed
+    /// without surfacing the approval UI. Cleared when the session ends —
+    /// never persisted to disk, so "bypass" is always session-scoped.
+    var bypassedTools: Set<String>
+
     // MARK: - Timestamps
 
     var lastActivity: Date
@@ -100,6 +106,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
             lastToolName: nil, firstUserMessage: nil, lastUserMessageDate: nil
         ),
         needsClearReconciliation: Bool = false,
+        bypassedTools: Set<String> = [],
         lastActivity: Date = Date(),
         createdAt: Date = Date()
     ) {
@@ -119,6 +126,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         self.subagentState = subagentState
         self.conversationInfo = conversationInfo
         self.needsClearReconciliation = needsClearReconciliation
+        self.bypassedTools = bypassedTools
         self.lastActivity = lastActivity
         self.createdAt = createdAt
     }

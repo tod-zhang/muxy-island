@@ -14,7 +14,6 @@ import Foundation
 struct ClaudeCodeProvider: SessionProvider {
     let id = ProviderID.claudeCode
     let displayName = "Claude Code"
-    let iconName = "sparkles"
     let executableNames = ["claude"]
     let capabilities = ProviderCapabilities.claudeCode
 

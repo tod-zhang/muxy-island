@@ -17,7 +17,6 @@ private let logger = Logger(subsystem: "com.claudeisland", category: "OpenCodePr
 struct OpenCodeProvider: SessionProvider {
     let id = ProviderID.openCode
     let displayName = "OpenCode"
-    let iconName = "chevron.left.forwardslash.chevron.right"
     let executableNames = ["opencode"]
     /// Plugin API exposes session.idle only — nothing to approve, no way to
     /// inject user input back, no JSONL log to replay. Pure "done" notifier.

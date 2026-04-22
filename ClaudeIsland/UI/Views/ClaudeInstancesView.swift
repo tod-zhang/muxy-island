@@ -75,7 +75,8 @@ struct ClaudeInstancesView: View {
                         onChat: { openChat(session) },
                         onArchive: { archiveSession(session) },
                         onApprove: { approveSession(session) },
-                        onReject: { rejectSession(session) }
+                        onReject: { rejectSession(session) },
+                        onBypass: { bypassSession(session) }
                     )
                     .id(session.stableId)
                 }
@@ -125,6 +126,10 @@ struct ClaudeInstancesView: View {
         sessionMonitor.denyPermission(sessionId: session.sessionId, reason: nil)
     }
 
+    private func bypassSession(_ session: SessionState) {
+        sessionMonitor.bypassPermission(sessionId: session.sessionId)
+    }
+
     private func archiveSession(_ session: SessionState) {
         sessionMonitor.archiveSession(sessionId: session.sessionId)
     }
@@ -139,6 +144,7 @@ struct InstanceRow: View {
     let onArchive: () -> Void
     let onApprove: () -> Void
     let onReject: () -> Void
+    let onBypass: () -> Void
 
     @State private var isHovered = false
     @State private var spinnerPhase = 0
@@ -308,7 +314,8 @@ struct InstanceRow: View {
                 InlineApprovalButtons(
                     onChat: onChat,
                     onApprove: onApprove,
-                    onReject: onReject
+                    onReject: onReject,
+                    onBypass: onBypass
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
             } else {
@@ -393,20 +400,14 @@ struct InlineApprovalButtons: View {
     let onChat: () -> Void
     let onApprove: () -> Void
     let onReject: () -> Void
+    let onBypass: () -> Void
 
-    @State private var showChatButton = false
     @State private var showDenyButton = false
     @State private var showAllowButton = false
+    @State private var showBypassButton = false
 
     var body: some View {
         HStack(spacing: 6) {
-            // Chat button
-            IconButton(icon: "bubble.left") {
-                onChat()
-            }
-            .opacity(showChatButton ? 1 : 0)
-            .scaleEffect(showChatButton ? 1 : 0.8)
-
             Button {
                 onReject()
             } label: {
@@ -436,16 +437,34 @@ struct InlineApprovalButtons: View {
             .buttonStyle(.plain)
             .opacity(showAllowButton ? 1 : 0)
             .scaleEffect(showAllowButton ? 1 : 0.8)
+
+            // Bypass — "allow this tool for the rest of this session".
+            // Tinted amber to signal it's wider-scoped than a plain Allow.
+            Button {
+                onBypass()
+            } label: {
+                Text("Bypass")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(TerminalColors.amber.opacity(0.9))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .help("Always allow this tool for the rest of this session")
+            .opacity(showBypassButton ? 1 : 0)
+            .scaleEffect(showBypassButton ? 1 : 0.8)
         }
         .onAppear {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.0)) {
-                showChatButton = true
-            }
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.05)) {
                 showDenyButton = true
             }
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.1)) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.05)) {
                 showAllowButton = true
+            }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.1)) {
+                showBypassButton = true
             }
         }
     }

@@ -414,7 +414,8 @@ struct ChatView: View {
             tool: tool,
             toolInput: session.pendingToolInput,
             onApprove: { approvePermission() },
-            onDeny: { denyPermission() }
+            onDeny: { denyPermission() },
+            onBypass: { bypassPermission() }
         )
     }
 
@@ -472,6 +473,10 @@ struct ChatView: View {
 
     private func denyPermission() {
         sessionMonitor.denyPermission(sessionId: sessionId, reason: nil)
+    }
+
+    private func bypassPermission() {
+        sessionMonitor.bypassPermission(sessionId: sessionId)
     }
 
     private func sendMessage() {
@@ -1135,10 +1140,12 @@ struct ChatApprovalBar: View {
     let toolInput: String?
     let onApprove: () -> Void
     let onDeny: () -> Void
+    let onBypass: () -> Void
 
     @State private var showContent = false
     @State private var showAllowButton = false
     @State private var showDenyButton = false
+    @State private var showBypassButton = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -1190,6 +1197,23 @@ struct ChatApprovalBar: View {
             .buttonStyle(.plain)
             .opacity(showAllowButton ? 1 : 0)
             .scaleEffect(showAllowButton ? 1 : 0.8)
+
+            // Bypass — allow + remember for the rest of this session.
+            Button {
+                onBypass()
+            } label: {
+                Text("Bypass")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(TerminalColors.amber.opacity(0.9))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .help("Always allow this tool for the rest of this session")
+            .opacity(showBypassButton ? 1 : 0)
+            .scaleEffect(showBypassButton ? 1 : 0.8)
         }
         .frame(minHeight: 44)  // Consistent height with other bars
         .padding(.horizontal, 16)
@@ -1204,6 +1228,9 @@ struct ChatApprovalBar: View {
             }
             withAnimation(.spring(response: 0.35, dampingFraction: 0.7).delay(0.15)) {
                 showAllowButton = true
+            }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7).delay(0.2)) {
+                showBypassButton = true
             }
         }
     }
