@@ -192,6 +192,7 @@ struct InstanceRow: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
         HStack(alignment: .center, spacing: 10) {
             // State indicator on left
             stateIndicator
@@ -310,15 +311,7 @@ struct InstanceRow: View {
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            } else if isWaitingForApproval {
-                InlineApprovalButtons(
-                    onChat: onChat,
-                    onApprove: onApprove,
-                    onReject: onReject,
-                    onBypass: onBypass
-                )
-                .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            } else {
+            } else if !isWaitingForApproval {
                 HStack(spacing: 8) {
                     // Chat icon — only for providers that either have chat
                     // history to show or support sending input back. OpenCode
@@ -339,6 +332,21 @@ struct InstanceRow: View {
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
+        }
+
+        // Approval buttons live on their own row below the title/tool line
+        // so long tool inputs stay readable and the Deny/Allow/Bypass trio
+        // gets enough horizontal room.
+        if isWaitingForApproval && !isInteractiveTool {
+            InlineApprovalButtons(
+                onChat: onChat,
+                onApprove: onApprove,
+                onReject: onReject,
+                onBypass: onBypass
+            )
+            .padding(.leading, 24)  // align under the title column
+            .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
+        }
         }
         .padding(.leading, 8)
         .padding(.trailing, 14)
@@ -408,51 +416,55 @@ struct InlineApprovalButtons: View {
 
     var body: some View {
         HStack(spacing: 6) {
+            // Deny — dark charcoal. Neutral "no" — not destructive, doesn't
+            // demand attention, just the non-preferred path.
             Button {
                 onReject()
             } label: {
                 Text("Deny")
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.horizontal, 10)
+                    .foregroundColor(.white.opacity(0.75))
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.white.opacity(0.12))
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
             .opacity(showDenyButton ? 1 : 0)
             .scaleEffect(showDenyButton ? 1 : 0.8)
 
+            // Allow — white, the primary "go". High contrast on the dark
+            // panel = the clear default action.
             Button {
                 onApprove()
             } label: {
                 Text("Allow")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.black)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.9))
+                    .background(Color.white.opacity(0.95))
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
             .opacity(showAllowButton ? 1 : 0)
             .scaleEffect(showAllowButton ? 1 : 0.8)
 
-            // Bypass — "allow this tool for the rest of this session".
-            // Tinted amber to signal it's wider-scoped than a plain Allow.
+            // Bypass — yellow. Still "go" but wider-scoped (persists across
+            // this project's sessions), hence a caution tint.
             Button {
                 onBypass()
             } label: {
                 Text("Bypass")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.black)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 5)
                     .background(TerminalColors.amber.opacity(0.9))
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
-            .help("Always allow this tool for the rest of this session")
+            .help("Always allow this tool in this project")
             .opacity(showBypassButton ? 1 : 0)
             .scaleEffect(showBypassButton ? 1 : 0.8)
         }

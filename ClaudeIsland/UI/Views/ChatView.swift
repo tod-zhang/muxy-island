@@ -1166,28 +1166,28 @@ struct ChatApprovalBar: View {
 
             Spacer()
 
-            // Deny button
+            // Deny — dark charcoal, neutral.
             Button {
                 onDeny()
             } label: {
                 Text("Deny")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(.white.opacity(0.75))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.white.opacity(0.12))
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
             .opacity(showDenyButton ? 1 : 0)
             .scaleEffect(showDenyButton ? 1 : 0.8)
 
-            // Allow button
+            // Allow — white, the primary "go".
             Button {
                 onApprove()
             } label: {
                 Text("Allow")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -1198,12 +1198,12 @@ struct ChatApprovalBar: View {
             .opacity(showAllowButton ? 1 : 0)
             .scaleEffect(showAllowButton ? 1 : 0.8)
 
-            // Bypass — allow + remember for the rest of this session.
+            // Bypass — yellow, wider-scoped "allow" with a caution tint.
             Button {
                 onBypass()
             } label: {
                 Text("Bypass")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -1211,7 +1211,7 @@ struct ChatApprovalBar: View {
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
-            .help("Always allow this tool for the rest of this session")
+            .help("Always allow this tool in this project")
             .opacity(showBypassButton ? 1 : 0)
             .scaleEffect(showBypassButton ? 1 : 0.8)
         }
