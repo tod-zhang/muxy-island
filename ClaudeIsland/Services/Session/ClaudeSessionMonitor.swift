@@ -121,10 +121,33 @@ class ClaudeSessionMonitor: ObservableObject {
         }
     }
 
+    /// Approve the current permission request AND turn on session-wide
+    /// bypass so ANY future tool request in this session auto-allows.
+    /// Scope is just the session's lifetime; no persistence.
+    func sessionBypassPermission(sessionId: String) {
+        Task {
+            guard let session = await SessionStore.shared.session(for: sessionId),
+                  let permission = session.activePermission else {
+                return
+            }
+
+            HookSocketServer.shared.respondToPermission(
+                toolUseId: permission.toolUseId,
+                decision: "allow"
+            )
+
+            await SessionStore.shared.process(
+                .permissionSessionBypassed(
+                    sessionId: sessionId,
+                    toolUseId: permission.toolUseId
+                )
+            )
+        }
+    }
+
     /// Approve the current permission request AND add the tool name to the
-    /// session's bypass list so future requests for the same tool are
-    /// auto-allowed without surfacing the approval UI. Scope is per-session
-    /// only — ending the session clears the list.
+    /// project's persistent bypass list so future requests for the same
+    /// tool in any session rooted at the same cwd are auto-allowed.
     func bypassPermission(sessionId: String) {
         Task {
             guard let session = await SessionStore.shared.session(for: sessionId),

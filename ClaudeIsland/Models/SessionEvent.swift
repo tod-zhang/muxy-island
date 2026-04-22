@@ -24,10 +24,16 @@ enum SessionEvent: Sendable {
     /// User denied a permission request
     case permissionDenied(sessionId: String, toolUseId: String, reason: String?)
 
-    /// User chose Bypass on a permission request — approve this tool
-    /// call AND remember the tool name so further requests for the same
-    /// tool in this session auto-approve without UI.
+    /// User chose "Allow All" on a permission request — approve this
+    /// call AND remember the tool name persistently for this project
+    /// so further requests for the same tool auto-approve without UI.
     case permissionBypassed(sessionId: String, toolUseId: String, toolName: String)
+
+    /// User chose "Bypass" on a permission request — approve this call
+    /// AND flip the session-wide bypass flag so *every* future tool
+    /// request in this session auto-approves. Scope is just this one
+    /// session's lifetime, never persisted.
+    case permissionSessionBypassed(sessionId: String, toolUseId: String)
 
     /// Permission socket failed (connection died before response)
     case permissionSocketFailed(sessionId: String, toolUseId: String)
@@ -196,6 +202,8 @@ extension SessionEvent: CustomStringConvertible {
             return "permissionDenied(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)))"
         case .permissionBypassed(let sessionId, let toolUseId, let toolName):
             return "permissionBypassed(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)), name: \(toolName))"
+        case .permissionSessionBypassed(let sessionId, let toolUseId):
+            return "permissionSessionBypassed(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)))"
         case .permissionSocketFailed(let sessionId, let toolUseId):
             return "permissionSocketFailed(session: \(sessionId.prefix(8)), tool: \(toolUseId.prefix(12)))"
         case .fileUpdated(let payload):

@@ -69,6 +69,9 @@ actor SessionStore {
         case .permissionBypassed(let sessionId, let toolUseId, let toolName):
             await processPermissionBypassed(sessionId: sessionId, toolUseId: toolUseId, toolName: toolName)
 
+        case .permissionSessionBypassed(let sessionId, let toolUseId):
+            await processPermissionSessionBypassed(sessionId: sessionId, toolUseId: toolUseId)
+
         case .permissionSocketFailed(let sessionId, let toolUseId):
             await processSocketFailure(sessionId: sessionId, toolUseId: toolUseId)
 
@@ -157,22 +160,28 @@ actor SessionStore {
             return
         }
 
-        // Bypass shortcut: if the user has previously hit Bypass for this
-        // tool in this session, skip the whole approval dance — respond
-        // "allow" on the socket immediately and keep the session in its
-        // current phase (typically .processing) so the UI doesn't flash.
+        // Bypass shortcuts (in priority order): session-wide bypass trumps
+        // per-tool bypass trumps normal approval flow. In either bypass
+        // case we respond "allow" on the socket immediately and keep the
+        // session in .processing so the UI doesn't flash approval state.
         if event.event == "PermissionRequest",
-           let toolUseId = event.toolUseId,
-           let toolName = event.tool,
-           session.bypassedTools.contains(toolName) {
-            Self.logger.debug("Bypass hit for \(sessionId.prefix(8), privacy: .public) tool:\(toolName, privacy: .public) — auto-allow")
-            HookSocketServer.shared.respondToPermission(toolUseId: toolUseId, decision: "allow")
-            // Still record the tool in the tracker so PostToolUse can match.
-            session.toolTracker.startTool(id: toolUseId, name: toolName)
-            session.lastActivity = Date()
-            sessions[sessionId] = session
-            publishState()
-            return
+           let toolUseId = event.toolUseId {
+            let toolName = event.tool ?? ""
+            let sessionWide = session.allToolsBypassed
+            let perTool = !toolName.isEmpty && session.bypassedTools.contains(toolName)
+            if sessionWide || perTool {
+                Self.logger.debug(
+                    "Bypass hit for \(sessionId.prefix(8), privacy: .public) tool:\(toolName, privacy: .public) — auto-allow (\(sessionWide ? "session-wide" : "per-tool", privacy: .public))"
+                )
+                HookSocketServer.shared.respondToPermission(toolUseId: toolUseId, decision: "allow")
+                if !toolName.isEmpty {
+                    session.toolTracker.startTool(id: toolUseId, name: toolName)
+                }
+                session.lastActivity = Date()
+                sessions[sessionId] = session
+                publishState()
+                return
+            }
         }
 
         let newPhase = event.determinePhase()
@@ -419,7 +428,20 @@ actor SessionStore {
 
     // MARK: - Permission Processing
 
-    /// Bypass = Approve + remember the tool name so future approval
+    /// Bypass-all = Approve + set the session-wide flag so every future
+    /// tool in this session auto-allows. Non-persistent; flag dies with
+    /// the session. Meant as an escape hatch for batch runs where the
+    /// user trusts the whole sequence.
+    private func processPermissionSessionBypassed(sessionId: String, toolUseId: String) async {
+        if var session = sessions[sessionId] {
+            session.allToolsBypassed = true
+            sessions[sessionId] = session
+            Self.logger.debug("Session-wide bypass enabled for \(sessionId.prefix(8), privacy: .public)")
+        }
+        await processPermissionApproved(sessionId: sessionId, toolUseId: toolUseId)
+    }
+
+    /// Allow All = Approve + remember the tool name so future approval
     /// requests for the same tool in this project are auto-allowed.
     /// Persistence is per-cwd, so a brand-new session starting in the
     /// same project inherits the same bypasses without the user having

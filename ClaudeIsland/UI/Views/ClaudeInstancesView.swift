@@ -76,7 +76,8 @@ struct ClaudeInstancesView: View {
                         onArchive: { archiveSession(session) },
                         onApprove: { approveSession(session) },
                         onReject: { rejectSession(session) },
-                        onBypass: { bypassSession(session) }
+                        onAllowAll: { bypassSession(session) },
+                        onBypass: { sessionBypass(session) }
                     )
                     .id(session.stableId)
                 }
@@ -130,6 +131,10 @@ struct ClaudeInstancesView: View {
         sessionMonitor.bypassPermission(sessionId: session.sessionId)
     }
 
+    private func sessionBypass(_ session: SessionState) {
+        sessionMonitor.sessionBypassPermission(sessionId: session.sessionId)
+    }
+
     private func archiveSession(_ session: SessionState) {
         sessionMonitor.archiveSession(sessionId: session.sessionId)
     }
@@ -142,9 +147,10 @@ struct InstanceRow: View {
     let onFocus: () -> Void
     let onChat: () -> Void
     let onArchive: () -> Void
-    let onApprove: () -> Void
-    let onReject: () -> Void
-    let onBypass: () -> Void
+    let onApprove: () -> Void        // Allow Once
+    let onReject: () -> Void         // Deny
+    let onAllowAll: () -> Void       // per-project persistent bypass
+    let onBypass: () -> Void         // session-wide bypass (all tools)
 
     @State private var isHovered = false
     @State private var spinnerPhase = 0
@@ -342,6 +348,7 @@ struct InstanceRow: View {
                 onChat: onChat,
                 onApprove: onApprove,
                 onReject: onReject,
+                onAllowAll: onAllowAll,
                 onBypass: onBypass
             )
             .padding(.leading, 24)  // align under the title column
@@ -408,77 +415,69 @@ struct InlineApprovalButtons: View {
     let onChat: () -> Void
     let onApprove: () -> Void
     let onReject: () -> Void
+    let onAllowAll: () -> Void
     let onBypass: () -> Void
 
-    @State private var showDenyButton = false
-    @State private var showAllowButton = false
-    @State private var showBypassButton = false
+    @State private var showDeny = false
+    @State private var showAllowOnce = false
+    @State private var showAllowAll = false
+    @State private var showBypass = false
+
+    // Semantic palette (matches the approved mockup):
+    //   Deny       — #2D2D2D charcoal + white text  (neutral no)
+    //   Allow Once — #F2F2F2 near-white + black      (primary, one-shot)
+    //   Allow All  — #E89039 orange + white          (warn, project-wide)
+    //   Bypass     — #B23A3A dark red + white        (danger, session-wide)
+    private let denyBG    = Color(red: 0.18, green: 0.18, blue: 0.18)
+    private let allowBG   = Color(red: 0.95, green: 0.95, blue: 0.95)
+    private let allowAllBG = Color(red: 0.91, green: 0.565, blue: 0.22)
+    private let bypassBG  = Color(red: 0.70, green: 0.23, blue: 0.23)
 
     var body: some View {
         HStack(spacing: 6) {
-            // Deny — dark charcoal. Neutral "no" — not destructive, doesn't
-            // demand attention, just the non-preferred path.
-            Button {
-                onReject()
-            } label: {
-                Text("Deny")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.75))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.12))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .opacity(showDenyButton ? 1 : 0)
-            .scaleEffect(showDenyButton ? 1 : 0.8)
+            pill(label: "Deny", bg: denyBG, fg: .white.opacity(0.9), action: onReject)
+                .opacity(showDeny ? 1 : 0)
+                .scaleEffect(showDeny ? 1 : 0.85)
 
-            // Allow — white, the primary "go". High contrast on the dark
-            // panel = the clear default action.
-            Button {
-                onApprove()
-            } label: {
-                Text("Allow")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.95))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .opacity(showAllowButton ? 1 : 0)
-            .scaleEffect(showAllowButton ? 1 : 0.8)
+            pill(label: "Allow Once", bg: allowBG, fg: .black, weight: .semibold, action: onApprove)
+                .opacity(showAllowOnce ? 1 : 0)
+                .scaleEffect(showAllowOnce ? 1 : 0.85)
 
-            // Bypass — yellow. Still "go" but wider-scoped (persists across
-            // this project's sessions), hence a caution tint.
-            Button {
-                onBypass()
-            } label: {
-                Text("Bypass")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(TerminalColors.amber.opacity(0.9))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .help("Always allow this tool in this project")
-            .opacity(showBypassButton ? 1 : 0)
-            .scaleEffect(showBypassButton ? 1 : 0.8)
+            pill(label: "Allow All", bg: allowAllBG, fg: .white, weight: .semibold, action: onAllowAll)
+                .help("Always allow this tool in this project")
+                .opacity(showAllowAll ? 1 : 0)
+                .scaleEffect(showAllowAll ? 1 : 0.85)
+
+            pill(label: "Bypass", bg: bypassBG, fg: .white, weight: .semibold, action: onBypass)
+                .help("Auto-approve every tool for the rest of this session")
+                .opacity(showBypass ? 1 : 0)
+                .scaleEffect(showBypass ? 1 : 0.85)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.0)) {
-                showDenyButton = true
-            }
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.05)) {
-                showAllowButton = true
-            }
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.1)) {
-                showBypassButton = true
-            }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.00)) { showDeny = true }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.04)) { showAllowOnce = true }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.08)) { showAllowAll = true }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.12)) { showBypass = true }
         }
+    }
+
+    private func pill(
+        label: String,
+        bg: Color,
+        fg: Color,
+        weight: Font.Weight = .medium,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 11, weight: weight))
+                .foregroundColor(fg)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(bg)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
 

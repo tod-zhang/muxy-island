@@ -69,11 +69,18 @@ struct SessionState: Equatable, Identifiable, Sendable {
     /// This removes pre-/clear items that no longer exist in the JSONL
     var needsClearReconciliation: Bool
 
-    /// Tool names the user has chosen to Bypass in this session. Future
-    /// PermissionRequest events for any tool in this set are auto-allowed
-    /// without surfacing the approval UI. Cleared when the session ends —
-    /// never persisted to disk, so "bypass" is always session-scoped.
+    /// Tool names that should auto-approve for this session. Seeded from
+    /// the per-project persistent store (BypassRules) on create, then
+    /// augmented whenever the user hits "Allow All" on a tool here. Used
+    /// by SessionStore to short-circuit PermissionRequest events.
     var bypassedTools: Set<String>
+
+    /// When true, *every* PermissionRequest for this session auto-approves
+    /// regardless of tool name — the "Bypass" button in the approval bar.
+    /// Scope is this single session only; flag dies when the session ends,
+    /// never persisted. Meant as a deliberate escape hatch for batch work
+    /// where the user trusts the whole run.
+    var allToolsBypassed: Bool
 
     // MARK: - Timestamps
 
@@ -107,6 +114,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         ),
         needsClearReconciliation: Bool = false,
         bypassedTools: Set<String> = [],
+        allToolsBypassed: Bool = false,
         lastActivity: Date = Date(),
         createdAt: Date = Date()
     ) {
@@ -127,6 +135,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         self.conversationInfo = conversationInfo
         self.needsClearReconciliation = needsClearReconciliation
         self.bypassedTools = bypassedTools
+        self.allToolsBypassed = allToolsBypassed
         self.lastActivity = lastActivity
         self.createdAt = createdAt
     }
