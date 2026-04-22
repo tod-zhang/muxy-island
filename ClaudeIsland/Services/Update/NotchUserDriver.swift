@@ -5,6 +5,7 @@
 //  Custom Sparkle user driver for in-notch update UI
 //
 
+import AppKit
 import Combine
 import Foundation
 import Sparkle

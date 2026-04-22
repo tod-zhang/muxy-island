@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Muxy Island</title>
+    <description>Muxy Island release feed</description>
+    <language>en</language>
+    <item>
+      <title>Version 0.1.0</title>
+      <pubDate>Tue, 22 Apr 2026 11:00:00 +0800</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>Muxy Island 0.1.0</h2>
+        <p>Fork of Vibe Notch with deep Muxy integration. See the GitHub release for full notes:</p>
+        <p><a href="https://github.com/tod-zhang/muxy-island/releases/tag/v0.1.0">Release notes</a></p>
+      ]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.1.0/MuxyIsland-0.1.0.dmg"
+                 sparkle:edSignature="wZqt3D2IuKbQmMT2mcRB+xfDkjw8nrS7ljJ9D1OaKIIWWqas8NWoTxOU8a3//wlAdeOwZrRXRsU38H4MI2C0AA=="
+                 length="6442444"
+                 type="application/octet-stream" />
+    </item>
+  </channel>
+</rss>

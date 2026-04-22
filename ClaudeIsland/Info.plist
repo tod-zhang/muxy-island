@@ -17,9 +17,14 @@
     <key>NSHumanReadableCopyright</key>
     <string>Copyright 2025. All rights reserved.</string>
 
-    <!-- Sparkle auto-updates disabled in this fork. Set SUFeedURL to your own
-         appcast URL and SUPublicEDKey to your EdDSA public key to enable. -->
+    <!-- Sparkle auto-update. Appcast is hosted via GitHub raw on the main
+         branch — updating docs/appcast.xml and pushing is enough; no CDN
+         invalidation needed (raw content caches ~5 min, fine for updates). -->
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/tod-zhang/muxy-island/main/docs/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>JJ3SlOgDVOLU3e35BZQWqrfObJYdZwkw8l+APPSxvgs=</string>
     <key>SUEnableAutomaticChecks</key>
-    <false/>
+    <true/>
 </dict>
 </plist>
