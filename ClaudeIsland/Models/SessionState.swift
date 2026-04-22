@@ -16,6 +16,10 @@ struct SessionState: Equatable, Identifiable, Sendable {
     let sessionId: String
     let cwd: String
     let projectName: String
+    /// Which SessionProvider produced this session — "claude_code",
+    /// "opencode", "codex", etc. Used by the UI to decide which features
+    /// (approval buttons, chat send, etc.) to expose.
+    var providerId: String
 
     // MARK: - Instance Metadata
 
@@ -80,6 +84,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         sessionId: String,
         cwd: String,
         projectName: String? = nil,
+        providerId: String = "claude_code",
         pid: Int? = nil,
         tty: String? = nil,
         isInTmux: Bool = false,
@@ -101,6 +106,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         self.sessionId = sessionId
         self.cwd = cwd
         self.projectName = projectName ?? URL(fileURLWithPath: cwd).lastPathComponent
+        self.providerId = providerId
         self.pid = pid
         self.tty = tty
         self.isInTmux = isInTmux

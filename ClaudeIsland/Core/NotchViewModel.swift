@@ -74,11 +74,11 @@ class NotchViewModel: ObservableObject {
             )
         case .menu:
             // Base height covers all static rows (Back, 4 picker rows, 2
-            // toggles, Update, GitHub, Quit + 3 dividers + padding).
+            // toggles, Update, Quit + 3 dividers + padding).
             // Picker expansion deltas added on top when expanded.
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 540
+                height: 500
                     + screenSelector.expandedPickerHeight
                     + soundSelector.expandedPickerHeight
                     + approvalSoundSelector.expandedPickerHeight
@@ -152,18 +152,29 @@ class NotchViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        events.mouseDown
+        events.localMouseDown
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.handleMouseDown()
+                self?.handleLocalMouseDown()
             }
             .store(in: &cancellables)
     }
 
-    /// Whether we're in chat mode (sticky behavior)
-    private var isInChatMode: Bool {
-        if case .chat = contentType { return true }
-        return false
+    /// Close the panel if a click lands inside our window but outside the
+    /// hit-test panel area. `addLocalMonitorForEvents` only fires for events
+    /// delivered to our own windows, which happens when `ignoresMouseEvents
+    /// = false` (i.e. panel is open) — so the check is already effectively
+    /// gated on `status == .opened`. The click is still consumed by the
+    /// window's default sendEvent; we don't try to forward it to apps behind
+    /// (that would need Accessibility). Users click a second time if they
+    /// wanted to hit the app underneath.
+    private func handleLocalMouseDown() {
+        let location = NSEvent.mouseLocation
+        guard status == .opened,
+              geometry.isPointOutsidePanel(location, size: openedSize),
+              !geometry.notchScreenRect.contains(location)
+        else { return }
+        notchClose()
     }
 
     /// The chat session we're viewing (persists across close/open)
@@ -202,59 +213,6 @@ class NotchViewModel: ObservableObject {
             }
             closeTimer = work
             DispatchQueue.main.asyncAfter(deadline: .now() + closeDelay, execute: work)
-        }
-    }
-
-    private func handleMouseDown() {
-        let location = NSEvent.mouseLocation
-
-        switch status {
-        case .opened:
-            if geometry.isPointOutsidePanel(location, size: openedSize) {
-                notchClose()
-                // Re-post the click so it reaches the window/app behind us
-                repostClickAt(location)
-            } else if geometry.notchScreenRect.contains(location) {
-                // Clicking notch while opened - only close if NOT in chat mode
-                if !isInChatMode {
-                    notchClose()
-                }
-            }
-        case .closed, .popping:
-            if geometry.isPointInNotch(location) {
-                notchOpen(reason: .click)
-            }
-        }
-    }
-
-    /// Re-posts a mouse click at the given screen location so it reaches windows behind us
-    private func repostClickAt(_ location: CGPoint) {
-        // Small delay to let the window's ignoresMouseEvents update
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            // Convert to CGEvent coordinate system (screen coordinates with Y from top-left)
-            guard let screen = NSScreen.main else { return }
-            let screenHeight = screen.frame.height
-            let cgPoint = CGPoint(x: location.x, y: screenHeight - location.y)
-
-            // Create and post mouse down event
-            if let mouseDown = CGEvent(
-                mouseEventSource: nil,
-                mouseType: .leftMouseDown,
-                mouseCursorPosition: cgPoint,
-                mouseButton: .left
-            ) {
-                mouseDown.post(tap: .cghidEventTap)
-            }
-
-            // Create and post mouse up event
-            if let mouseUp = CGEvent(
-                mouseEventSource: nil,
-                mouseType: .leftMouseUp,
-                mouseCursorPosition: cgPoint,
-                mouseButton: .left
-            ) {
-                mouseUp.post(tap: .cghidEventTap)
-            }
         }
     }
 

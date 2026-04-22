@@ -85,10 +85,10 @@ struct NotchMenuView: View {
                     isOn: hooksInstalled
                 ) {
                     if hooksInstalled {
-                        HookInstaller.uninstall()
+                        ProviderRegistry.shared.uninstallAll()
                         hooksInstalled = false
                     } else {
-                        HookInstaller.installIfNeeded()
+                        ProviderRegistry.shared.installAllDetected()
                         hooksInstalled = true
                     }
                 }
@@ -99,15 +99,6 @@ struct NotchMenuView: View {
 
                 // About
                 UpdateRow(updateManager: updateManager)
-
-                MenuRow(
-                    icon: "star",
-                    label: "Star on GitHub"
-                ) {
-                    if let url = URL(string: "https://github.com/tod-zhang/muxy-island") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }
 
                 Divider()
                     .background(Color.white.opacity(0.08))
@@ -136,7 +127,7 @@ struct NotchMenuView: View {
     }
 
     private func refreshStates() {
-        hooksInstalled = HookInstaller.isInstalled()
+        hooksInstalled = ProviderRegistry.shared.anyHookInstalled()
         launchAtLogin = SMAppService.mainApp.status == .enabled
         screenSelector.refreshScreens()
     }

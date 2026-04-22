@@ -11,6 +11,15 @@ struct HookInstaller {
 
     /// Install hook script and update settings.json on app launch
     static func installIfNeeded() {
+        ensureScriptInstalled()
+        updateSettings(at: ClaudePaths.settingsFile)
+    }
+
+    /// Copy the bundled Python hook script to ~/.claude/hooks/. The script
+    /// is shared across providers (Claude Code, Codex) — both register it
+    /// under different configs and pass `--provider <id>` to disambiguate.
+    /// Safe to call from any provider's install() path.
+    static func ensureScriptInstalled() {
         let hooksDir = ClaudePaths.hooksDir
         let pythonScript = hooksDir.appendingPathComponent("claude-island-state.py")
 
@@ -27,8 +36,6 @@ struct HookInstaller {
                 ofItemAtPath: pythonScript.path
             )
         }
-
-        updateSettings(at: ClaudePaths.settingsFile)
     }
 
     private static func updateSettings(at settingsURL: URL) {

@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """
-Claude Island Hook
-- Sends session state to ClaudeIsland.app via Unix socket
-- For PermissionRequest: waits for user decision from the app
+Muxy Island Hook — used by both Claude Code and Codex CLI.
+
+Usage: ... claude-island-state.py [--provider <id>]
+
+  --provider claude_code   (default) for ~/.claude/settings.json
+  --provider codex         for ~/.codex/hooks.json
+
+Both Claude Code and Codex deliver Claude-Code-style JSON to stdin, so the
+same script handles both by relabeling the provider tag on the outgoing
+socket payload.
 """
 import json
 import os
@@ -11,6 +18,21 @@ import sys
 
 SOCKET_PATH = "/tmp/claude-island.sock"
 TIMEOUT_SECONDS = 300  # 5 minutes for permission decisions
+
+
+def parse_provider_arg(argv):
+    """Extract --provider <name> from argv; return (provider, remaining)."""
+    provider = "claude_code"
+    remaining = []
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--provider" and i + 1 < len(argv):
+            provider = argv[i + 1]
+            i += 2
+            continue
+        remaining.append(argv[i])
+        i += 1
+    return provider, remaining
 
 
 def get_tty():
@@ -72,6 +94,8 @@ def send_event(state):
 
 
 def main():
+    provider, _ = parse_provider_arg(sys.argv[1:])
+
     try:
         data = json.load(sys.stdin)
     except json.JSONDecodeError:
@@ -93,6 +117,10 @@ def main():
         "event": event,
         "pid": claude_pid,
         "tty": tty,
+        # Tag every event with the provider so the Swift side can route it.
+        # Defaults to claude_code; Codex registers the same script with
+        # --provider codex so its sessions don't collide with Claude's.
+        "provider": provider,
     }
 
     # Muxy injects these env vars into every pane it spawns. Capturing them

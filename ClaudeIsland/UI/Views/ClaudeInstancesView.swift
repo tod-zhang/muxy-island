@@ -159,6 +159,14 @@ struct InstanceRow: View {
         return toolName == "AskUserQuestion"
     }
 
+    /// Whether to offer the chat bubble for this session. Providers without
+    /// chat history and without message-send ability (like OpenCode today)
+    /// wouldn't have anything to show, so we suppress the button.
+    private var showChatButton: Bool {
+        let caps = ProviderRegistry.shared.capabilities(forProviderId: session.providerId)
+        return caps.hasChatHistory || caps.canSendMessages
+    }
+
     /// Status text based on session phase (fallback when no other content)
     private var phaseStatusText: String {
         switch session.phase {
@@ -305,9 +313,14 @@ struct InstanceRow: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
             } else {
                 HStack(spacing: 8) {
-                    // Chat icon - always show
-                    IconButton(icon: "bubble.left") {
-                        onChat()
+                    // Chat icon — only for providers that either have chat
+                    // history to show or support sending input back. OpenCode
+                    // has neither, so we hide the bubble entirely for those
+                    // sessions rather than opening an empty, disabled panel.
+                    if showChatButton {
+                        IconButton(icon: "bubble.left") {
+                            onChat()
+                        }
                     }
 
                     // Archive button - only for idle or completed sessions

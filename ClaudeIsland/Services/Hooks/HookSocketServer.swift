@@ -12,7 +12,7 @@ import os.log
 /// Logger for hook socket server
 private let logger = Logger(subsystem: "com.claudeisland", category: "Hooks")
 
-/// Event received from Claude Code hooks
+/// Event received from a provider's hook (Claude Code today; future: OpenCode, Codex).
 struct HookEvent: Codable, Sendable {
     let sessionId: String
     let cwd: String
@@ -28,6 +28,10 @@ struct HookEvent: Codable, Sendable {
     let muxyPaneId: String?
     let muxyProjectId: String?
     let muxyWorktreeId: String?
+    /// Which provider emitted this event. Optional for backwards compat with
+    /// older hooks that don't send it — decoded as `"claude_code"` when
+    /// absent since that was the only supported source historically.
+    let provider: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
@@ -39,10 +43,14 @@ struct HookEvent: Codable, Sendable {
         case muxyPaneId = "muxy_pane_id"
         case muxyProjectId = "muxy_project_id"
         case muxyWorktreeId = "muxy_worktree_id"
+        case provider
     }
 
+    /// Resolved provider id — falls back to claude_code for old hook payloads.
+    var providerId: String { provider ?? "claude_code" }
+
     /// Create a copy with updated toolUseId
-    init(sessionId: String, cwd: String, event: String, status: String, pid: Int?, tty: String?, tool: String?, toolInput: [String: AnyCodable]?, toolUseId: String?, notificationType: String?, message: String?, muxyPaneId: String? = nil, muxyProjectId: String? = nil, muxyWorktreeId: String? = nil) {
+    init(sessionId: String, cwd: String, event: String, status: String, pid: Int?, tty: String?, tool: String?, toolInput: [String: AnyCodable]?, toolUseId: String?, notificationType: String?, message: String?, muxyPaneId: String? = nil, muxyProjectId: String? = nil, muxyWorktreeId: String? = nil, provider: String? = nil) {
         self.sessionId = sessionId
         self.cwd = cwd
         self.event = event
@@ -57,6 +65,7 @@ struct HookEvent: Codable, Sendable {
         self.muxyPaneId = muxyPaneId
         self.muxyProjectId = muxyProjectId
         self.muxyWorktreeId = muxyWorktreeId
+        self.provider = provider
     }
 
     var sessionPhase: SessionPhase {
@@ -459,7 +468,8 @@ class HookSocketServer {
                 message: event.message,
                 muxyPaneId: event.muxyPaneId,
                 muxyProjectId: event.muxyProjectId,
-                muxyWorktreeId: event.muxyWorktreeId
+                muxyWorktreeId: event.muxyWorktreeId,
+                provider: event.provider
             )
 
             let pending = PendingPermission(
