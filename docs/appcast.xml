@@ -4,7 +4,30 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-        <item>
+            <item>
+      <title>Version 0.3.0</title>
+      <pubDate>Wed, 22 Apr 2026 04:47:46 +0000</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[## 改动
+
+- **审批按钮移到 session 下方单独一行** —— 之前 `[Deny] [Allow] [Bypass]` 和标题挤在同一行，session 名长或工具输入长时按钮被挤；现在换行显示，布局宽敞
+- **Deny / Allow / Bypass 配色调整**：
+  - Deny：深灰底 + 浅灰字（中性"否"）
+  - Allow：白底 + 黑字粗体（主动作，最显眼）
+  - Bypass：琥珀黄底 + 黑字粗体（警告色，"作用更广的允许"）
+- 菜单里的版本号不再带 build 号尾巴（`v0.3.0` 而不是 `v0.3.0 (6)`）
+
+## 升级
+
+0.2.0 用户点菜单的"检查更新"会自动下载并替换。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.3.0/MuxyIsland-0.3.0.dmg"
+                 sparkle:edSignature="v9TaNgV9FTzunsCkWnjBAC8ufISENQJ0qv2JIkondFS/+1d184R0rjTz0zBHCDZ7nrGoqecZYv//D0OwjaWvCA=="
+                 length="6470195"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.2.0</title>
       <pubDate>Wed, 22 Apr 2026 04:21:39 +0000</pubDate>
       <sparkle:version>6</sparkle:version>
