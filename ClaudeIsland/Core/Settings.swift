@@ -40,7 +40,25 @@ enum AppSettings {
         static let notificationSound = "notificationSound"
         static let approvalSound = "approvalSound"
         static let claudeDirectoryName = "claudeDirectoryName"
+        static let notificationAutoCloseSeconds = "notificationAutoCloseSeconds"
     }
+
+    // MARK: - Auto-close
+
+    /// Seconds before a notification-opened panel auto-collapses. 0 = never
+    /// auto-close (panel sticks until the user dismisses). Default 5.
+    static var notificationAutoCloseSeconds: Int {
+        get {
+            let value = defaults.object(forKey: Keys.notificationAutoCloseSeconds) as? Int
+            return value ?? 5
+        }
+        set {
+            defaults.set(newValue, forKey: Keys.notificationAutoCloseSeconds)
+        }
+    }
+
+    /// Allowed values for the auto-close picker in settings. 0 means Off.
+    static let notificationAutoCloseOptions: [Int] = [0, 3, 5, 10, 30]
 
     // MARK: - Notification Sound
 

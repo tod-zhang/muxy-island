@@ -73,12 +73,12 @@ class NotchViewModel: ObservableObject {
                 height: 580
             )
         case .menu:
-            // Base height covers all static rows (Back, 4 picker rows, 2
+            // Base height covers all static rows (Back, 5 picker rows, 2
             // toggles, Update, Quit + 3 dividers + padding).
             // Picker expansion deltas added on top when expanded.
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 500
+                height: 540
                     + screenSelector.expandedPickerHeight
                     + soundSelector.expandedPickerHeight
                     + approvalSoundSelector.expandedPickerHeight
@@ -111,6 +111,11 @@ class NotchViewModel: ObservableObject {
     private var closeTimer: DispatchWorkItem?
     private let openDelay: TimeInterval = 0
     private let closeDelay: TimeInterval = 0
+
+    /// Scheduled auto-close for notification-opened panels. Cancelled as
+    /// soon as the user hovers in (engaging), status changes, or the
+    /// panel is already closed by some other path.
+    private var autoCloseTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
@@ -224,6 +229,10 @@ class NotchViewModel: ObservableObject {
         openTimer?.cancel(); openTimer = nil
         closeTimer?.cancel(); closeTimer = nil
 
+        // Engaging with the panel (even briefly) cancels any pending
+        // notification auto-close — the user noticed and wants to read.
+        if newHovering { cancelAutoClose() }
+
         if newHovering {
             guard status == .closed || status == .popping else { return }
             let work = DispatchWorkItem { [weak self] in
@@ -254,6 +263,7 @@ class NotchViewModel: ObservableObject {
         // Don't restore chat on notification - show instances list instead
         if reason == .notification {
             currentChatSession = nil
+            scheduleAutoCloseIfNeeded()
             return
         }
 
@@ -268,12 +278,44 @@ class NotchViewModel: ObservableObject {
     }
 
     func notchClose() {
+        // Any pending auto-close is moot once the panel is closed.
+        autoCloseTask?.cancel()
+        autoCloseTask = nil
+
         // Save chat session before closing if in chat mode
         if case .chat(let session) = contentType {
             currentChatSession = session
         }
         status = .closed
         contentType = .instances
+    }
+
+    /// Arm a one-shot auto-close for notification-opened panels. Reads the
+    /// delay from AppSettings (0 = disabled). Cancelled whenever the user
+    /// hovers into the panel (see `cancelAutoClose`) or the panel closes
+    /// for any reason.
+    private func scheduleAutoCloseIfNeeded() {
+        autoCloseTask?.cancel()
+        autoCloseTask = nil
+
+        let seconds = AppSettings.notificationAutoCloseSeconds
+        guard seconds > 0 else { return }
+
+        autoCloseTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled,
+                  let self,
+                  self.status == .opened,
+                  self.openReason == .notification,
+                  !self.isHovering  // safety: don't close while user is hovering
+            else { return }
+            self.notchClose()
+        }
+    }
+
+    private func cancelAutoClose() {
+        autoCloseTask?.cancel()
+        autoCloseTask = nil
     }
 
     func notchPop() {

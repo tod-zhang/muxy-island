@@ -54,6 +54,7 @@ struct NotchMenuView: View {
                     currentSound: { AppSettings.approvalSound },
                     onSelect: { AppSettings.approvalSound = $0 }
                 )
+                AutoClosePickerRow()
                 ClaudeDirPickerRow()
 
                 Divider()
