@@ -74,11 +74,11 @@ class NotchViewModel: ObservableObject {
             )
         case .menu:
             // Base height covers all static rows (Back, 5 picker rows, 2
-            // toggles, Update, Quit + 3 dividers + padding).
+            // toggles, Accessibility, Update, Quit + 3 dividers + padding).
             // Picker expansion deltas added on top when expanded.
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 540
+                height: 580
                     + screenSelector.expandedPickerHeight
                     + soundSelector.expandedPickerHeight
                     + approvalSoundSelector.expandedPickerHeight

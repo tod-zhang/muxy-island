@@ -94,6 +94,8 @@ struct NotchMenuView: View {
                     }
                 }
 
+                AccessibilityRow()
+
                 Divider()
                     .background(Color.white.opacity(0.08))
                     .padding(.vertical, 4)
