@@ -4,7 +4,19 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-                            <item>
+                                <item>
+      <title>Version 0.8.0</title>
+      <pubDate>Thu, 23 Apr 2026 13:06:55 +0000</pubDate>
+      <sparkle:version>11</sparkle:version>
+      <sparkle:shortVersionString>0.8.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[**Fix**: 闲置 session 现在按最近活动时间倒序排，刚完成的会排到最上面（之前被项目名字母序挡在下面了）。项目身份由颜色 tag 负责区分。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.8.0/MuxyIsland-0.8.0.dmg"
+                 sparkle:edSignature="kCtbWH8gMchle0jGnb9+M6YCVzJdMmkmg0MDGQCibu957RVN25M6H5ccIk/3o58r3hUQ7+35X/E5CIUzND+HAg=="
+                 length="6553539"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.7.0</title>
       <pubDate>Thu, 23 Apr 2026 10:15:36 +0000</pubDate>
       <sparkle:version>10</sparkle:version>
