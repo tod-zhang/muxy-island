@@ -101,7 +101,7 @@ xcodebuild -scheme ClaudeIsland -configuration Release \
     build \
     | grep -E "error:|BUILD (SUCC|FAIL)" || true
 
-APP_PATH="$BUILD_DIR/Build/Products/Release/Vibe Notch.app"
+APP_PATH="$BUILD_DIR/Build/Products/Release/Muxy Island.app"
 if [ ! -d "$APP_PATH" ]; then
     echo "ERROR: Build did not produce $APP_PATH"
     exit 1

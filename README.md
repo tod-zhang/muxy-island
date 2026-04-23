@@ -29,7 +29,7 @@ Also supports **Codex CLI** (OpenAI) and **OpenCode** (sst) alongside Claude Cod
 ## Install
 
 Download the latest DMG from the [Releases page](https://github.com/tod-zhang/muxy-island/releases/latest)
-and drag `Vibe Notch.app` to `/Applications`.
+and drag `Muxy Island.app` to `/Applications`.
 
 **First launch**: the app is ad-hoc signed (no paid Apple Developer cert), so
 macOS Gatekeeper will warn about an unidentified developer. Right-click the app
@@ -54,7 +54,7 @@ reach into Muxy.
 
 The **first time** you click a session row to jump into its Muxy pane, Muxy
 will pop up a pairing request asking you to approve a new device named
-"Vibe Notch". Click **Approve**. The pairing is cached — you won't be asked again.
+"Muxy Island". Click **Approve**. The pairing is cached — you won't be asked again.
 
 ### 3. Hooks install themselves
 
@@ -158,7 +158,7 @@ xcodebuild -scheme ClaudeIsland -configuration Release \
   ENABLE_HARDENED_RUNTIME=NO build
 ```
 
-Build output lands in `build/Build/Products/Release/Vibe Notch.app`.
+Build output lands in `build/Build/Products/Release/Muxy Island.app`.
 
 To cut a Release (bumps the build number, packages a signed DMG, updates the
 Sparkle appcast, and creates the GitHub release):
