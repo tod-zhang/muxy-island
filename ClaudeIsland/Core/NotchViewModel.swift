@@ -26,13 +26,11 @@ enum NotchOpenReason {
 enum NotchContentType: Equatable {
     case instances
     case menu
-    case chat(SessionState)
 
     var id: String {
         switch self {
         case .instances: return "instances"
         case .menu: return "menu"
-        case .chat(let session): return "chat-\(session.sessionId)"
         }
     }
 }
@@ -66,19 +64,13 @@ class NotchViewModel: ObservableObject {
     /// Dynamic opened size based on content type
     var openedSize: CGSize {
         switch contentType {
-        case .chat:
-            // Large size for chat view
-            return CGSize(
-                width: min(screenRect.width * 0.5, 600),
-                height: 580
-            )
         case .menu:
-            // Base height covers all static rows (Back, 5 picker rows, 2
+            // Base height covers all static rows (Back, 6 picker rows, 2
             // toggles, Accessibility, Update, Quit + 3 dividers + padding).
             // Picker expansion deltas added on top when expanded.
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 580
+                height: 620
                     + screenSelector.expandedPickerHeight
                     + soundSelector.expandedPickerHeight
                     + approvalSoundSelector.expandedPickerHeight
@@ -211,9 +203,6 @@ class NotchViewModel: ObservableObject {
         notchClose()
     }
 
-    /// The chat session we're viewing (persists across close/open)
-    private var currentChatSession: SessionState?
-
     private func handleMouseMove(_ location: CGPoint) {
         let inNotch = geometry.isPointInNotch(location)
         let inOpened = status == .opened && geometry.isPointInOpenedPanel(location, size: openedSize)
@@ -260,20 +249,8 @@ class NotchViewModel: ObservableObject {
         openReason = reason
         status = .opened
 
-        // Don't restore chat on notification - show instances list instead
         if reason == .notification {
-            currentChatSession = nil
             scheduleAutoCloseIfNeeded()
-            return
-        }
-
-        // Restore chat session if we had one open before
-        if let chatSession = currentChatSession {
-            // Avoid unnecessary updates if already showing this chat
-            if case .chat(let current) = contentType, current.sessionId == chatSession.sessionId {
-                return
-            }
-            contentType = .chat(chatSession)
         }
     }
 
@@ -282,10 +259,6 @@ class NotchViewModel: ObservableObject {
         autoCloseTask?.cancel()
         autoCloseTask = nil
 
-        // Save chat session before closing if in chat mode
-        if case .chat(let session) = contentType {
-            currentChatSession = session
-        }
         status = .closed
         contentType = .instances
     }
@@ -330,20 +303,6 @@ class NotchViewModel: ObservableObject {
 
     func toggleMenu() {
         contentType = contentType == .menu ? .instances : .menu
-    }
-
-    func showChat(for session: SessionState) {
-        // Avoid unnecessary updates if already showing this chat
-        if case .chat(let current) = contentType, current.sessionId == session.sessionId {
-            return
-        }
-        contentType = .chat(session)
-    }
-
-    /// Go back to instances list and clear saved chat state
-    func exitChat() {
-        currentChatSession = nil
-        contentType = .instances
     }
 
     /// Perform boot animation: expand briefly then collapse

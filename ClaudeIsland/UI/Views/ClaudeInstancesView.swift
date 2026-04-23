@@ -37,26 +37,52 @@ struct ClaudeInstancesView: View {
 
     // MARK: - Instances List
 
-    /// Priority: active (approval/processing/compacting) > waitingForInput > idle
-    /// Secondary sort: by last user message date (stable - doesn't change when agent responds)
-    /// Note: approval requests stay in their date-based position to avoid layout shift
+    /// Two-tier ordering:
+    ///
+    /// 1. **Active** sessions (approval / processing / compacting) come first,
+    ///    sorted by priority then lastUserMessageDate. Never trimmed — an
+    ///    approval should never disappear off the bottom of the list.
+    /// 2. **Idle / ready** sessions come second, grouped by projectKey so
+    ///    the same-project rows cluster visually (which, combined with the
+    ///    colored ProjectTag, replaces the old collapsible-group UX).
+    ///    Trimmed to `AppSettings.idleSessionLimit` (default 5, "All" = 0).
     private var sortedInstances: [SessionState] {
-        sessionMonitor.instances.sorted { a, b in
-            let priorityA = phasePriority(a.phase)
-            let priorityB = phasePriority(b.phase)
-            if priorityA != priorityB {
-                return priorityA < priorityB
-            }
-            // Sort by last user message date (more recent first)
-            // Fall back to lastActivity if no user messages yet
-            let dateA = a.lastUserMessageDate ?? a.lastActivity
-            let dateB = b.lastUserMessageDate ?? b.lastActivity
-            return dateA > dateB
+        let all = sessionMonitor.instances
+        let active = all.filter { isActive($0) }
+            .sorted(by: activeSort)
+        let idle = all.filter { !isActive($0) }
+            .sorted(by: idleSort)
+        let limit = AppSettings.idleSessionLimit
+        let trimmedIdle = limit <= 0 ? idle : Array(idle.prefix(limit))
+        return active + trimmedIdle
+    }
+
+    private func isActive(_ session: SessionState) -> Bool {
+        switch session.phase {
+        case .waitingForApproval, .processing, .compacting: return true
+        default: return false
         }
     }
 
-    /// Lower number = higher priority
-    /// Approval requests share priority with processing to maintain stable ordering
+    private func activeSort(_ a: SessionState, _ b: SessionState) -> Bool {
+        // Approvals first, ties by most-recent user message.
+        let priorityA = phasePriority(a.phase)
+        let priorityB = phasePriority(b.phase)
+        if priorityA != priorityB { return priorityA < priorityB }
+        let dateA = a.lastUserMessageDate ?? a.lastActivity
+        let dateB = b.lastUserMessageDate ?? b.lastActivity
+        return dateA > dateB
+    }
+
+    private func idleSort(_ a: SessionState, _ b: SessionState) -> Bool {
+        // Cluster by project key (so same-project rows are adjacent),
+        // then by last activity within each project.
+        let keyA = ProjectTag.projectKey(for: a)
+        let keyB = ProjectTag.projectKey(for: b)
+        if keyA != keyB { return keyA < keyB }
+        return a.lastActivity > b.lastActivity
+    }
+
     private func phasePriority(_ phase: SessionPhase) -> Int {
         switch phase {
         case .waitingForApproval, .processing, .compacting: return 0
@@ -72,8 +98,6 @@ struct ClaudeInstancesView: View {
                     InstanceRow(
                         session: session,
                         onFocus: { focusSession(session) },
-                        onChat: { openChat(session) },
-                        onArchive: { archiveSession(session) },
                         onApprove: { approveSession(session) },
                         onReject: { rejectSession(session) },
                         onAllowAll: { bypassSession(session) },
@@ -115,10 +139,6 @@ struct ClaudeInstancesView: View {
         }
     }
 
-    private func openChat(_ session: SessionState) {
-        viewModel.showChat(for: session)
-    }
-
     private func approveSession(_ session: SessionState) {
         sessionMonitor.approvePermission(sessionId: session.sessionId)
     }
@@ -134,10 +154,6 @@ struct ClaudeInstancesView: View {
     private func sessionBypass(_ session: SessionState) {
         sessionMonitor.sessionBypassPermission(sessionId: session.sessionId)
     }
-
-    private func archiveSession(_ session: SessionState) {
-        sessionMonitor.archiveSession(sessionId: session.sessionId)
-    }
 }
 
 // MARK: - Instance Row
@@ -145,8 +161,6 @@ struct ClaudeInstancesView: View {
 struct InstanceRow: View {
     let session: SessionState
     let onFocus: () -> Void
-    let onChat: () -> Void
-    let onArchive: () -> Void
     let onApprove: () -> Void        // Allow Once
     let onReject: () -> Void         // Deny
     let onAllowAll: () -> Void       // per-project persistent bypass
@@ -169,14 +183,6 @@ struct InstanceRow: View {
     private var isInteractiveTool: Bool {
         guard let toolName = session.pendingToolName else { return false }
         return toolName == "AskUserQuestion"
-    }
-
-    /// Whether to offer the chat bubble for this session. Providers without
-    /// chat history and without message-send ability (like OpenCode today)
-    /// wouldn't have anything to show, so we suppress the button.
-    private var showChatButton: Bool {
-        let caps = ProviderRegistry.shared.capabilities(forProviderId: session.providerId)
-        return caps.hasChatHistory || caps.canSendMessages
     }
 
     /// Status text based on session phase (fallback when no other content)
@@ -294,49 +300,23 @@ struct InstanceRow: View {
 
             Spacer(minLength: 0)
 
-            // Action icons or approval buttons
+            // Right side: project tag when idle/active, "Go to Terminal"
+            // button for interactive approval tools (AskUserQuestion) since
+            // those need the user to actually type in the terminal.
             if isWaitingForApproval && isInteractiveTool {
-                // Interactive tools like AskUserQuestion - show chat + terminal buttons
-                HStack(spacing: 8) {
-                    IconButton(icon: "bubble.left") {
-                        onChat()
-                    }
-
-                    // Go to Terminal button — Muxy sessions always enable it;
-                    // tmux sessions need yabai.
-                    if session.isInMuxy {
-                        TerminalButton(
-                            isEnabled: true,
-                            onTap: { onFocus() }
-                        )
-                    } else if isYabaiAvailable {
-                        TerminalButton(
-                            isEnabled: session.isInTmux,
-                            onTap: { onFocus() }
-                        )
-                    }
+                if session.isInMuxy {
+                    TerminalButton(isEnabled: true, onTap: { onFocus() })
+                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                } else if isYabaiAvailable {
+                    TerminalButton(isEnabled: session.isInTmux, onTap: { onFocus() })
+                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
                 }
-                .transition(.opacity.combined(with: .scale(scale: 0.9)))
             } else if !isWaitingForApproval {
-                HStack(spacing: 8) {
-                    // Chat icon — only for providers that either have chat
-                    // history to show or support sending input back. OpenCode
-                    // has neither, so we hide the bubble entirely for those
-                    // sessions rather than opening an empty, disabled panel.
-                    if showChatButton {
-                        IconButton(icon: "bubble.left") {
-                            onChat()
-                        }
-                    }
-
-                    // Archive button - only for idle or completed sessions
-                    if session.phase == .idle || session.phase == .waitingForInput {
-                        IconButton(icon: "archivebox") {
-                            onArchive()
-                        }
-                    }
-                }
-                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                // Colored project tag — same-project rows share a color,
+                // complementing the sort-by-project ordering so clusters
+                // read as natural groups without a hierarchical UI.
+                ProjectTag(session: session)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
         }
 
@@ -345,7 +325,6 @@ struct InstanceRow: View {
         // gets enough horizontal room.
         if isWaitingForApproval && !isInteractiveTool {
             InlineApprovalButtons(
-                onChat: onChat,
                 onApprove: onApprove,
                 onReject: onReject,
                 onAllowAll: onAllowAll,
@@ -412,7 +391,6 @@ struct InstanceRow: View {
 
 /// Compact inline approval buttons with staggered animation
 struct InlineApprovalButtons: View {
-    let onChat: () -> Void
     let onApprove: () -> Void
     let onReject: () -> Void
     let onAllowAll: () -> Void

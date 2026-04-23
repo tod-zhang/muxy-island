@@ -41,6 +41,7 @@ enum AppSettings {
         static let approvalSound = "approvalSound"
         static let claudeDirectoryName = "claudeDirectoryName"
         static let notificationAutoCloseSeconds = "notificationAutoCloseSeconds"
+        static let idleSessionLimit = "idleSessionLimit"
     }
 
     // MARK: - Auto-close
@@ -59,6 +60,23 @@ enum AppSettings {
 
     /// Allowed values for the auto-close picker in settings. 0 means Off.
     static let notificationAutoCloseOptions: [Int] = [0, 3, 5, 10, 30]
+
+    // MARK: - Session list trimming
+
+    /// How many idle / ready sessions to keep in the notch list. Active
+    /// sessions (processing / waitingForApproval / compacting) ignore this
+    /// cap — they're always shown so approvals can't get hidden. 0 = All.
+    static var idleSessionLimit: Int {
+        get {
+            let value = defaults.object(forKey: Keys.idleSessionLimit) as? Int
+            return value ?? 5
+        }
+        set {
+            defaults.set(newValue, forKey: Keys.idleSessionLimit)
+        }
+    }
+
+    static let idleSessionLimitOptions: [Int] = [3, 5, 10, 0]
 
     // MARK: - Notification Sound
 
