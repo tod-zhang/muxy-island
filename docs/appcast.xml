@@ -4,7 +4,34 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-                    <item>
+                        <item>
+      <title>Version 0.6.0</title>
+      <pubDate>Thu, 23 Apr 2026 10:00:59 +0000</pubDate>
+      <sparkle:version>9</sparkle:version>
+      <sparkle:shortVersionString>0.6.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[## 新增
+
+- **项目 tag** —— 每条 session 右侧显示一个带色胶囊标签（项目名），7 色调色板：蓝 / 橙 / 绿 / 紫 / 粉 / 青 / 黄。同一项目的 session 永远同色，不同项目明显区分
+- **按项目聚类排序** —— 同项目 session 自动相邻（配合颜色视觉"成组"），比层级折叠 UI 更轻
+- **闲置 session 数量限制** —— 默认只保留最近 5 条 Idle / Ready，活跃的（处理中 / 等审批）永远全显示。设置里可选 3 / 5 / 10 / All
+- **Opt-in Accessibility**（v0.5.0 做的） —— 菜单里 `Enable` 按钮主动申请，不强制弹框
+- **审批按钮新布局**（v0.5.0） —— `Deny` / `Allow Once` / `Allow All` / `Bypass` 4 按钮在 session 下方一行，语义清晰
+
+## 移除
+
+- **归档按钮** —— 不需要了，闲置数量自动裁
+- **聊天视图** —— 删了 `ChatView.swift` / `MarkdownRenderer.swift` / `ToolResultViews.swift` 和相关代码（~1500 行）。想看对话 / 回消息，直接切到 Muxy pane 原生体验更好。面板职责回归"状态监控 + 审批"本份
+
+## 升级
+
+0.3.0–0.5.0 用户点菜单 "Check for Updates" → Sparkle 自动下载替换。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.6.0/MuxyIsland-0.6.0.dmg"
+                 sparkle:edSignature="lOE+oOldGL9JWinuXvKUJHazING/w8PrZeeZonZmeuisLZX3DUr9+zt7GQqlzmXW54fyBaLcQyM8xpPSWPW4DA=="
+                 length="5833503"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.5.0</title>
       <pubDate>Thu, 23 Apr 2026 01:26:16 +0000</pubDate>
       <sparkle:version>8</sparkle:version>
