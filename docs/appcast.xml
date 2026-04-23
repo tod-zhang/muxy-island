@@ -4,7 +4,29 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-                <item>
+                    <item>
+      <title>Version 0.5.0</title>
+      <pubDate>Thu, 23 Apr 2026 01:26:16 +0000</pubDate>
+      <sparkle:version>8</sparkle:version>
+      <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[## 新增
+
+- **Opt-in Accessibility 权限** —— 菜单里新增 `Accessibility` 行，默认 Off。点 **Enable** 后 macOS 会弹权限对话框，授权后启用增强功能：点面板外的一次点击既关面板、又能穿透到下层 app（原来需要点两次）。不授权也能正常用，只是少这一下便利
+
+## 修复 / 优化
+
+- 自动更新流程真正可用了（0.4.0 里 CFBundleVersion 没 bump 导致 Sparkle 判定"已是最新"；脚本现在每次 release 自动递增 build number）
+
+## 升级
+
+0.3.0 / 0.4.0 用户点菜单 "Check for Updates" → Sparkle 自动下载替换。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.5.0/MuxyIsland-0.5.0.dmg"
+                 sparkle:edSignature="0zToYB/hdy8BTsKG2ZRzN7O0LL3m011OdHyZqDpyRn5mNQBqetBFSKIgoUDfXK//doD45MTCdq16VjqGGK3/BA=="
+                 length="6534861"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.4.0</title>
       <pubDate>Wed, 22 Apr 2026 06:10:41 +0000</pubDate>
       <sparkle:version>7</sparkle:version>
