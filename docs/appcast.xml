@@ -4,7 +4,26 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-                        <item>
+                            <item>
+      <title>Version 0.7.0</title>
+      <pubDate>Thu, 23 Apr 2026 10:15:36 +0000</pubDate>
+      <sparkle:version>10</sparkle:version>
+      <sparkle:shortVersionString>0.7.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[## 改动
+
+- **重命名**：App 从 `Vibe Notch` 更名为 **`Muxy Island`** —— 和仓库名 / Release / README 统一。Bundle ID 保持不变，所以从 0.6.0 直接自动更新不会丢权限/设置/appcast
+- **新图标**：换成维护者的 GitHub 头像（上游的像素角色是 Anthropic 的品牌资产，不宜继续分发）
+
+## 升级注意
+
+Sparkle 自动更新会把新版装到 `/Applications/Muxy Island.app` —— 旧的 `/Applications/Vibe Notch.app` 不会被自动清理，可以手动删（已经跑起新版后就是 orphan 了）。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.7.0/MuxyIsland-0.7.0.dmg"
+                 sparkle:edSignature="gtcfYZB0J1ObC8tOBXwHTkIQOvsBVMqo3+rRrQZezSFfXiT2c912w92QfoLM9bn21F3XD1nsmij1LTL2O9y+DQ=="
+                 length="6552800"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.6.0</title>
       <pubDate>Thu, 23 Apr 2026 10:00:59 +0000</pubDate>
       <sparkle:version>9</sparkle:version>
