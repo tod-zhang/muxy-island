@@ -75,11 +75,11 @@ struct ClaudeInstancesView: View {
     }
 
     private func idleSort(_ a: SessionState, _ b: SessionState) -> Bool {
-        // Cluster by project key (so same-project rows are adjacent),
-        // then by last activity within each project.
-        let keyA = ProjectTag.projectKey(for: a)
-        let keyB = ProjectTag.projectKey(for: b)
-        if keyA != keyB { return keyA < keyB }
+        // Most recent activity first, regardless of project. Visual project
+        // clustering is carried by the colored ProjectTag alone — forcing
+        // physical adjacency by project name would bury a just-finished
+        // session under older ones from a project that sorts alphabetically
+        // earlier, which is what just happened.
         return a.lastActivity > b.lastActivity
     }
 
