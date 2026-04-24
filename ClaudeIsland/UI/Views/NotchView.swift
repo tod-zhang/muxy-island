@@ -420,24 +420,16 @@ struct NotchView: View {
                 viewModel.notchOpen(reason: .notification)
             }
 
-            // Approval is more urgent than "ready for input" — Claude is
-            // blocked until the user decides. Play the user-configured
-            // approval sound for newly waiting-for-approval sessions.
-            // Ready-sound for waitingForInput is handled in a separate
-            // observer (handleWaitingForInputChange) so we don't double up.
+            // Approval blocks Claude until the user decides — the sound
+            // should fire even if the user is already in the terminal, so
+            // they can't miss it. Focus gating only affects whether the
+            // panel pops (above).
             let newApprovalSessions = sessions.filter {
                 newPendingIds.contains($0.stableId) && $0.phase.isWaitingForApproval
             }
             if !newApprovalSessions.isEmpty,
                let soundName = AppSettings.approvalSound.soundName {
-                Task {
-                    let shouldPlay = await shouldPlayNotificationSound(for: newApprovalSessions)
-                    if shouldPlay {
-                        await MainActor.run {
-                            NSSound(named: soundName)?.play()
-                        }
-                    }
-                }
+                NSSound(named: soundName)?.play()
             }
         }
 
@@ -464,20 +456,12 @@ struct NotchView: View {
 
         // Bounce the notch when a session newly enters waitingForInput state
         if !newWaitingIds.isEmpty {
-            // Get the sessions that just entered waitingForInput
-            let newlyWaitingSessions = waitingForInputSessions.filter { newWaitingIds.contains($0.stableId) }
-
-            // Play notification sound if the session is not actively focused
+            // Sound fires unconditionally — the user wants an audible "done"
+            // cue even when they're focused on the terminal. The focus check
+            // is only used to decide whether to pop the panel, which is the
+            // intrusive part.
             if let soundName = AppSettings.notificationSound.soundName {
-                // Check if we should play sound (async check for tmux pane focus)
-                Task {
-                    let shouldPlaySound = await shouldPlayNotificationSound(for: newlyWaitingSessions)
-                    if shouldPlaySound {
-                        await MainActor.run {
-                            NSSound(named: soundName)?.play()
-                        }
-                    }
-                }
+                NSSound(named: soundName)?.play()
             }
 
             // Trigger bounce animation to get user's attention
@@ -499,21 +483,4 @@ struct NotchView: View {
         previousWaitingForInputIds = currentIds
     }
 
-    /// Determine if notification sound should play for the given sessions
-    /// Returns true if ANY session is not actively focused
-    private func shouldPlayNotificationSound(for sessions: [SessionState]) async -> Bool {
-        for session in sessions {
-            guard let pid = session.pid else {
-                // No PID means we can't check focus, assume not focused
-                return true
-            }
-
-            let isFocused = await TerminalVisibilityDetector.isSessionFocused(sessionPid: pid)
-            if !isFocused {
-                return true
-            }
-        }
-
-        return false
-    }
 }

@@ -15,6 +15,7 @@ struct TerminalAppRegistry: Sendable {
         "iTerm2",
         "iTerm",
         "Ghostty",
+        "Muxy",           // libghostty-based terminal this fork integrates with
         "Alacritty",
         "kitty",
         "Hyper",
@@ -39,6 +40,7 @@ struct TerminalAppRegistry: Sendable {
         "com.apple.Terminal",
         "com.googlecode.iterm2",
         "com.mitchellh.ghostty",
+        "com.muxy.app",
         "io.alacritty",
         "org.alacritty",
         "net.kovidgoyal.kitty",
