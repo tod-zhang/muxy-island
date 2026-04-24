@@ -4,7 +4,19 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-                                    <item>
+                                        <item>
+      <title>Version 0.9.1</title>
+      <pubDate>Fri, 24 Apr 2026 13:10:45 +0000</pubDate>
+      <sparkle:version>13</sparkle:version>
+      <sparkle:shortVersionString>0.9.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[**Fix**：Codex Desktop 在一个 thread 里会触发两条 SessionStart 事件（一个写进磁盘的真 session，一个从不落盘的幽灵），之前 Muxy Island 会把它们当作两条独立 session 都挂在面板上。现在 1 秒后就会自动清掉没 rollout 文件的那条，面板恢复只显示一条。CLI 版 Codex 不受影响。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.9.1/MuxyIsland-0.9.1.dmg"
+                 sparkle:edSignature="FVU+PERM/a//amZoUtmpncQUNJleWs72ncxWuIKrpuje4bEo34h8VvLJHHupGspI/7TUJVt+3uBJ4a3BwUNdCw=="
+                 length="6549300"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.9.0</title>
       <pubDate>Fri, 24 Apr 2026 04:51:22 +0000</pubDate>
       <sparkle:version>12</sparkle:version>
