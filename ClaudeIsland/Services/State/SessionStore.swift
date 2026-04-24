@@ -1150,8 +1150,26 @@ actor SessionStore {
     private func recheckAllSessions() {
         var removedSession = false
 
+        // Codex fires SessionStart with two distinct session_ids per thread —
+        // a "real" one that gets a rollout file on disk, and a "ghost" one
+        // that doesn't. Both get stored under pid=<app-server>, so the
+        // pid-alive check below never prunes them. Probe the rollout file
+        // directly (Codex writes it at SessionStart, sub-second latency);
+        // ids with no matching file after a short grace are ghosts.
+        let codexGhostGraceSeconds: TimeInterval = 1
+
         for (sessionId, session) in Array(sessions) {
             if session.phase == .ended {
+                sessions.removeValue(forKey: sessionId)
+                cancelPendingSync(sessionId: sessionId)
+                removedSession = true
+                continue
+            }
+
+            if session.providerId == ProviderID.codex,
+               Date().timeIntervalSince(session.lastActivity) > codexGhostGraceSeconds,
+               !codexRolloutFileExists(sessionId: sessionId) {
+                Self.logger.info("Codex ghost session \(sessionId.prefix(8), privacy: .public) — no rollout file on disk after grace period, pruning")
                 sessions.removeValue(forKey: sessionId)
                 cancelPendingSync(sessionId: sessionId)
                 removedSession = true
@@ -1189,6 +1207,51 @@ actor SessionStore {
     /// Check if a process is still running
     private nonisolated func isProcessRunning(pid: Int) -> Bool {
         return kill(Int32(pid), 0) == 0
+    }
+
+    /// Check whether Codex has persisted a rollout file for this session id.
+    /// Rollout files live at `~/.codex/sessions/<YYYY>/<MM>/<DD>/rollout-*-<id>.jsonl`
+    /// (by session start date) and move to `~/.codex/archived_sessions/`
+    /// when the thread is archived. Scan today + yesterday (both local and
+    /// UTC dates) plus archived_sessions — covers late-night sessions that
+    /// straddle midnight in either timezone. Any I/O failure means "file
+    /// might exist" so we don't false-prune.
+    private nonisolated func codexRolloutFileExists(sessionId: String) -> Bool {
+        let codexHome = Foundation.ProcessInfo.processInfo.environment["CODEX_HOME"]
+            ?? (NSHomeDirectory() + "/.codex")
+        let suffix = "-\(sessionId).jsonl"
+        let fm = FileManager.default
+
+        var localCal = Calendar(identifier: .gregorian)
+        localCal.timeZone = .current
+        var utcCal = Calendar(identifier: .gregorian)
+        utcCal.timeZone = TimeZone(identifier: "UTC") ?? .current
+
+        let now = Date()
+        let yesterday = now.addingTimeInterval(-86400)
+        let dateDirs: [String] = [
+            Self.codexDateDirFragment(localCal, now),
+            Self.codexDateDirFragment(localCal, yesterday),
+            Self.codexDateDirFragment(utcCal, now),
+            Self.codexDateDirFragment(utcCal, yesterday),
+        ]
+
+        let candidates: [String] = Array(Set(dateDirs))
+            .map { "\(codexHome)/sessions/\($0)" }
+            + ["\(codexHome)/archived_sessions"]
+
+        for dir in candidates {
+            guard let files = try? fm.contentsOfDirectory(atPath: dir) else { continue }
+            if files.contains(where: { $0.hasSuffix(suffix) }) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private nonisolated static func codexDateDirFragment(_ cal: Calendar, _ date: Date) -> String {
+        let c = cal.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d/%02d/%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
     // MARK: - State Publishing
