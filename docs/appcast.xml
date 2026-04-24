@@ -4,7 +4,19 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-                                <item>
+                                    <item>
+      <title>Version 0.9.0</title>
+      <pubDate>Fri, 24 Apr 2026 04:51:22 +0000</pubDate>
+      <sparkle:version>12</sparkle:version>
+      <sparkle:shortVersionString>0.9.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[**Fix**：当你聚焦在 Muxy 终端时不再弹面板了（Muxy 现在被识别为终端应用）。**声音永远响** —— 任务完成 / 审批请求的声音不再受聚焦状态影响，即使你正在终端里也会响（设置里选 `None` 可以静音）。]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.9.0/MuxyIsland-0.9.0.dmg"
+                 sparkle:edSignature="jyZg9Zx+oe9hfHr0V4bb8LtjZQqeQDabZJN884xzv8bAaPQ0huDuT+XcfyJAMv4JLITv87ZCpyG5I3kH29IODg=="
+                 length="6541530"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.8.0</title>
       <pubDate>Thu, 23 Apr 2026 13:06:55 +0000</pubDate>
       <sparkle:version>11</sparkle:version>
