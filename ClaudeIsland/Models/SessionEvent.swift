@@ -159,6 +159,13 @@ extension HookEvent {
             return .idle
         }
 
+        // Stop / SubagentStop fire when the assistant turn has ended; the
+        // payload's `status` still reflects the pre-stop state (often
+        // "processing"), so trust the event itself and go idle.
+        if event == "Stop" || event == "SubagentStop" {
+            return .idle
+        }
+
         switch status {
         case "waiting_for_input":
             return .waitingForInput
