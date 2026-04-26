@@ -4,7 +4,19 @@
     <title>Muxy Island</title>
     <description>Muxy Island release feed</description>
     <language>en</language>
-                                        <item>
+                                            <item>
+      <title>Version 0.9.2</title>
+      <pubDate>Sun, 26 Apr 2026 23:46:25 +0000</pubDate>
+      <sparkle:version>14</sparkle:version>
+      <sparkle:shortVersionString>0.9.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[Fix panel row staying in the orange 'running' state after a turn finishes; Stop / SubagentStop hooks now drop the row back to idle.]]></description>
+      <enclosure url="https://github.com/tod-zhang/muxy-island/releases/download/v0.9.2/MuxyIsland-0.9.2.dmg"
+                 sparkle:edSignature="9TZzM7vfdAnOsbQUhnYifXCdNbjbJZPddDt/5VOZjkjct3L0Cud3s1HEuqK9G+LRgG7oC7FIGVRuyzBve+KIDA=="
+                 length="6548998"
+                 type="application/octet-stream" />
+    </item>
+<item>
       <title>Version 0.9.1</title>
       <pubDate>Fri, 24 Apr 2026 13:10:45 +0000</pubDate>
       <sparkle:version>13</sparkle:version>
